@@ -146,7 +146,8 @@ cd app && xcodebuild -project Inlet.xcodeproj -scheme Inlet -configuration Debug
 | `apps/` | the app catalog: one JSON file per app Inlet can offer |
 | `profiles/`, `schemas/` | reader profiles and normalized schemas |
 | `dev/harness/` | optional browser-based harness (Python standard library) with fixture pages for developing profiles |
-| `docs/` | [how Siri finds content](docs/HOW_SIRI_FINDS_YOUR_CONTENT.md), [writing a profile](docs/WRITING_A_PROFILE.md), [roadmap](docs/ROADMAP.md) |
+| `AGENTS.md` | orientation and rules for AI coding agents and new contributors |
+| `docs/` | [how Siri finds content](docs/HOW_SIRI_FINDS_YOUR_CONTENT.md), [writing a profile](docs/WRITING_A_PROFILE.md), [roadmap](docs/ROADMAP.md), [releasing](docs/RELEASING.md) |
 
 ## License
 

@@ -61,3 +61,7 @@ The UI tests launch the app with `--offline`, so they never touch a real account
 
 Swift 6 with main-actor default isolation; match the surrounding code; comments explain *why*.
 JavaScript without a build step. Run `uvx ruff check` and `uvx ruff format` in the harness.
+
+## Releasing
+
+Maintainers: see [docs/RELEASING.md](docs/RELEASING.md). Agents and newcomers: start with [AGENTS.md](AGENTS.md).
