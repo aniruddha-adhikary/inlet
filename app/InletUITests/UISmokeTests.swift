@@ -21,6 +21,8 @@ final class UISmokeTests: XCTestCase {
     private func help(_ window: XCUIElement, _ item: String) {
         let button = window.toolbars.descendants(matching: .any)["help-menu"].firstMatch
         button.click()
+        // With another of the app's windows in front, the first click only brings this window forward.
+        if !button.menuItems[item].waitForExistence(timeout: 2) { button.click() }
         button.menuItems[item].click()
     }
 
@@ -115,13 +117,17 @@ final class UISmokeTests: XCTestCase {
         app.launchArguments = Self.introSeen + Self.iconShown
         app.launch()
         let window = openMainWindow(app)
-        XCTAssertTrue(window.textFields["account-name"].firstMatch.waitForExistence(timeout: 5), "accounts can be named")
+        // Tests never add accounts (they run against the person's real settings), so only check when one exists.
+        if !window.buttons["Add Account…"].exists {
+            XCTAssertTrue(window.textFields["account-name"].firstMatch.waitForExistence(timeout: 5), "accounts can be named")
+        }
 
         help(window, "Inlet Help")
         let helpWindow = app.windows["Inlet Help"]
         XCTAssertTrue(helpWindow.waitForExistence(timeout: 5))
         XCTAssertTrue(helpWindow.staticTexts["Use More Than One Account"].firstMatch.exists)
         snap("10-help", helpWindow)
+        helpWindow.buttons[XCUIIdentifierCloseWindow].click() // on a fresh install it opens right over the main window
 
         app.activate()
         help(window, "About Inlet")
