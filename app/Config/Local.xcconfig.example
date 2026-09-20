@@ -1,4 +1,4 @@
 // Copy to Local.xcconfig (gitignored) and edit.
 // Team ID: Xcode > Settings > Accounts, or the OU field of your "Apple Development" certificate.
 DEVELOPMENT_TEAM = ABCDE12345
-CHATBRIDGE_BUNDLE_ID = com.yourname.chatbridge
+INLET_BUNDLE_ID = com.yourname.inlet

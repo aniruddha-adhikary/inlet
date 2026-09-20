@@ -1,6 +1,6 @@
 # Security model
 
-Chatbridge reads your private conversations so Siri and Spotlight can find them. That makes
+Inlet reads your private conversations so Siri and Spotlight can find them. That makes
 it a high-value target, so the design goal is: **read-only, on this Mac only, least privilege,
 and erasable.**
 
@@ -10,7 +10,7 @@ and erasable.**
 | --- | --- |
 | **Read** | Messages the source web app has already loaded, via declarative profiles. |
 | **Never write** | No code path sends, edits, deletes, reacts, marks as read, or fetches history. The in-page reader can only resolve an object, enumerate it and read properties (`readers/pagestore.js`; enforced by a test that fails if the reader calls any function of the host app). The five Messages-domain intents Apple requires are present only as stubs that throw "read-only" (`ReadOnlyIntents.swift`). |
-| **Network** | Only the embedded web sessions talk to the network, and only to their own service. Chatbridge itself makes no network requests and has no server component. The on-device Apple model answers questions locally; Private Cloud Compute is not used. |
+| **Network** | Only the embedded web sessions talk to the network, and only to their own service. Inlet itself makes no network requests and has no server component. The on-device Apple model answers questions locally; Private Cloud Compute is not used. |
 
 ## Controls
 
@@ -40,18 +40,18 @@ and erasable.**
 ## Verify it yourself
 
 ```bash
-/Applications/Chatbridge.app/Contents/MacOS/Chatbridge --verify-storage
+/Applications/Inlet.app/Contents/MacOS/Inlet --verify-storage
 ```
 
 ```bash
-codesign -d --entitlements - /Applications/Chatbridge.app
+codesign -d --entitlements - /Applications/Inlet.app
 ```
 
 ## Known limits
 
-- Content donated to Spotlight is stored by macOS in its own index, outside Chatbridge's
+- Content donated to Spotlight is stored by macOS in its own index, outside Inlet's
   encryption. That is inherent to making it searchable by Siri; "Erase everything" removes it.
-- Siri AI shows on-screen content to the assistant; an open Chatbridge window is visible to it.
+- Siri AI shows on-screen content to the assistant; an open Inlet window is visible to it.
 - Reading a web client this way is outside the services' terms of use. It is passive and
   single-user, but it is unsupported and can break when the web apps change.
 - Distribution builds must be signed with a Developer ID and notarized (`scripts/package.sh`);

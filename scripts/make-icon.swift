@@ -2,7 +2,7 @@
 //
 // make-icon.swift
 //
-// Renders the Chatbridge macOS app icon at 1024x1024 and
+// Renders the Inlet macOS app icon at 1024x1024 and
 // downsamples it to every size required by AppIcon.appiconset.
 //
 // Usage:
@@ -14,9 +14,9 @@
 // always pin DEVELOPER_DIR to a full Xcode install when running this.)
 //
 // Design: a macOS "squircle" (rounded rect, ~22.37% corner radius) filled
-// with a vertical green -> teal gradient, a soft drop shadow, and two
-// overlapping white speech bubbles connected by three small dots to
-// suggest a bridge between chat apps and Siri/Spotlight.
+// with a vertical green -> teal gradient, a soft drop shadow, and a white
+// arrow flowing into an open tray: content from your apps
+// arriving on this Mac for Siri and Spotlight.
 
 import AppKit
 import CoreGraphics
@@ -35,7 +35,7 @@ let outputDir: String = {
     let scriptsDir = scriptURL.deletingLastPathComponent()
     let repoRoot = scriptsDir.deletingLastPathComponent()
     return repoRoot
-        .appendingPathComponent("app/Chatbridge/Assets.xcassets/AppIcon.appiconset")
+        .appendingPathComponent("app/Inlet/Assets.xcassets/AppIcon.appiconset")
         .path
 }()
 
@@ -48,7 +48,7 @@ if !fm.fileExists(atPath: outputDir) {
 
 let canvasSize = 1024.0
 
-/// Draws the full Chatbridge icon into a CGContext of size `canvasSize` x `canvasSize`.
+/// Draws the full Inlet icon into a CGContext of size `canvasSize` x `canvasSize`.
 func drawIcon(in ctx: CGContext) {
     ctx.saveGState()
 
@@ -105,70 +105,36 @@ func drawIcon(in ctx: CGContext) {
     )
     ctx.restoreGState()
 
-    // --- Foreground: two overlapping speech bubbles + connector dots --------
-    let white = NSColor.white.cgColor
-
-    // Large bubble (bottom-left), with a small tail.
-    let bubble1Rect = CGRect(x: 300, y: 360, width: 430, height: 270)
-    let bubble1Radius = 78.0
-    let bubble1Path = CGMutablePath()
-    bubble1Path.addRoundedRect(in: bubble1Rect, cornerWidth: bubble1Radius, cornerHeight: bubble1Radius)
-
-    // Tail for bubble 1: a small rounded triangle pointing down-left from
-    // the bubble's bottom-left region, overlapping the bubble so the two
-    // shapes read as one continuous speech bubble.
-    let tail1 = CGMutablePath()
-    tail1.move(to: CGPoint(x: 372, y: 392))
-    tail1.addLine(to: CGPoint(x: 300, y: 300))
-    tail1.addLine(to: CGPoint(x: 430, y: 388))
-    tail1.closeSubpath()
-
-    // Small bubble (upper-right), overlapping bubble 1's top-right corner.
-    let bubble2Rect = CGRect(x: 560, y: 560, width: 310, height: 200)
-    let bubble2Radius = 58.0
-    let bubble2Path = CGMutablePath()
-    bubble2Path.addRoundedRect(in: bubble2Rect, cornerWidth: bubble2Radius, cornerHeight: bubble2Radius)
+    // --- Foreground: an arrow flowing into an open tray (content coming in) --
+    // Deliberately says nothing about what kind of content: Inlet is not only for chats.
+    let mark = CGMutablePath()
+    // Tray: an open-topped container.
+    mark.move(to: CGPoint(x: 292, y: 500))
+    mark.addLine(to: CGPoint(x: 292, y: 372))
+    mark.addQuadCurve(to: CGPoint(x: 372, y: 292), control: CGPoint(x: 292, y: 292))
+    mark.addLine(to: CGPoint(x: 652, y: 292))
+    mark.addQuadCurve(to: CGPoint(x: 732, y: 372), control: CGPoint(x: 732, y: 292))
+    mark.addLine(to: CGPoint(x: 732, y: 500))
+    // Arrow: shaft and head, pointing down into the tray.
+    mark.move(to: CGPoint(x: 512, y: 772))
+    mark.addLine(to: CGPoint(x: 512, y: 452))
+    mark.move(to: CGPoint(x: 392, y: 572))
+    mark.addLine(to: CGPoint(x: 512, y: 452))
+    mark.addLine(to: CGPoint(x: 632, y: 572))
 
     ctx.saveGState()
-    ctx.setFillColor(white)
-    // Slight shadow under the bubbles for depth/separation from the background.
+    ctx.setStrokeColor(NSColor.white.cgColor)
+    ctx.setLineWidth(68)
+    ctx.setLineCap(.round)
+    ctx.setLineJoin(.round)
     ctx.setShadow(
         offset: CGSize(width: 0, height: -6),
         blur: 14,
         color: NSColor.black.withAlphaComponent(0.18).cgColor
     )
-    ctx.addPath(tail1)
-    ctx.addPath(bubble1Path)
-    ctx.fillPath()
+    ctx.addPath(mark)
+    ctx.strokePath()
     ctx.restoreGState()
-
-    ctx.saveGState()
-    ctx.setFillColor(white)
-    ctx.setShadow(
-        offset: CGSize(width: 0, height: -6),
-        blur: 14,
-        color: NSColor.black.withAlphaComponent(0.18).cgColor
-    )
-    ctx.addPath(bubble2Path)
-    ctx.fillPath()
-    ctx.restoreGState()
-
-    // Connector dots: three small white dots bridging the gap between the
-    // two bubbles' inner corners, suggesting a link/bridge.
-    let dotCenters: [(CGPoint, CGFloat)] = [
-        (CGPoint(x: 505, y: 470), 26),
-        (CGPoint(x: 555, y: 505), 20),
-        (CGPoint(x: 598, y: 538), 15),
-    ]
-    ctx.setFillColor(white)
-    for (center, radius) in dotCenters {
-        let dotRect = CGRect(
-            x: center.x - radius, y: center.y - radius,
-            width: radius * 2, height: radius * 2
-        )
-        ctx.addEllipse(in: dotRect)
-    }
-    ctx.fillPath()
 
     ctx.restoreGState()
 }

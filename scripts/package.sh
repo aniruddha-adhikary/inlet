@@ -1,21 +1,21 @@
 #!/bin/sh
-# Build a Release Chatbridge.app and wrap it in a DMG under dist/.
+# Build a Release Inlet.app and wrap it in a DMG under dist/.
 #
 # With a "Developer ID Application" certificate in the keychain the app is signed for
 # distribution, and if a notarytool keychain profile named by NOTARY_PROFILE exists
-# (create once with: xcrun notarytool store-credentials chatbridge-notary ...), the DMG is
+# (create once with: xcrun notarytool store-credentials inlet-notary ...), the DMG is
 # notarized and stapled. Without them you get a development-signed DMG that runs on this
 # Mac (and other Macs registered to the team) but is blocked by Gatekeeper elsewhere.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
-NOTARY_PROFILE="${NOTARY_PROFILE:-chatbridge-notary}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-inlet-notary}"
 DIST="$ROOT/dist"
 BUILD="$ROOT/app/build-release"
-APP="$BUILD/Build/Products/Release/Chatbridge.app"
+APP="$BUILD/Build/Products/Release/Inlet.app"
 
 rm -rf "$DIST" && mkdir -p "$DIST"
-xcodebuild -project "$ROOT/app/Chatbridge.xcodeproj" -scheme Chatbridge -configuration Release \
+xcodebuild -project "$ROOT/app/Inlet.xcodeproj" -scheme Inlet -configuration Release \
   -derivedDataPath "$BUILD" -allowProvisioningUpdates -allowProvisioningDeviceRegistration build > "$DIST/build.log" 2>&1 || true
 grep -q "BUILD SUCCEEDED" "$DIST/build.log" || { grep -E "error:" "$DIST/build.log" | head; echo "release build failed (see dist/build.log)"; exit 1; }
 touch "$BUILD/.metadata_never_index"
@@ -29,7 +29,7 @@ if codesign -d --entitlements - "$APP" 2>/dev/null | grep -q "get-task-allow"; t
 DEVID=$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -1)
 if [ -n "$DEVID" ]; then
   echo "signing with: $DEVID"
-  codesign --force --options runtime --timestamp --entitlements "$ROOT/app/Chatbridge.entitlements.resolved" --sign "$DEVID" "$APP" 2>/dev/null \
+  codesign --force --options runtime --timestamp --entitlements "$ROOT/app/Inlet.entitlements.resolved" --sign "$DEVID" "$APP" 2>/dev/null \
     || codesign --force --options runtime --timestamp --preserve-metadata=entitlements --sign "$DEVID" "$APP"
 else
   echo "no Developer ID certificate: keeping the development signature (not distributable outside your team)"
@@ -37,10 +37,10 @@ fi
 codesign --verify --deep --strict "$APP"
 
 STAGE="$DIST/stage"; mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/Chatbridge.app"
+ditto "$APP" "$STAGE/Inlet.app"
 ln -s /Applications "$STAGE/Applications"
-DMG="$DIST/Chatbridge-$VERSION.dmg"
-hdiutil create -quiet -volname "Chatbridge $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+DMG="$DIST/Inlet-$VERSION.dmg"
+hdiutil create -quiet -volname "Inlet $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
 rm -rf "$STAGE"
 
 if [ -n "$DEVID" ] && xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then

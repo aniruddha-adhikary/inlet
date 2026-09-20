@@ -5,7 +5,7 @@ and **fixes when a web app changes and a profile breaks**.
 
 ## Ground rules
 
-- **Read-only, always.** No change may give Chatbridge a way to send, edit, delete, react, mark as
+- **Read-only, always.** No change may give Inlet a way to send, edit, delete, react, mark as
   read, or trigger network requests in a source app. The in-page reader must stay a property
   reader; its test asserts it makes zero calls into the host app.
 - **No message content in logs, tests, issues or commits.** Use fictional fixtures. When reporting
@@ -39,7 +39,7 @@ node --test readers/tests/pagestore.test.mjs
 ```
 
 ```bash
-cd app && xcodebuild -project Chatbridge.xcodeproj -scheme Chatbridge -configuration Debug -derivedDataPath build -allowProvisioningUpdates test
+cd app && xcodebuild -project Inlet.xcodeproj -scheme Inlet -configuration Debug -derivedDataPath build -allowProvisioningUpdates test
 ```
 
 ```bash
@@ -49,11 +49,13 @@ cd dev/harness/host && uv run python -m unittest discover -s tests
 The UI tests drive the real app and use Apple's AppIntentsTesting to query entities the way Siri
 does. They seed fictional data and remove it afterwards. Re-run `install-app.sh` after them.
 
-## Adding a source
+## Adding an app
 
-See [docs/WRITING_A_PROFILE.md](docs/WRITING_A_PROFILE.md). A pull request for a new source
-should include the profile, a fake-store test, the sign-in descriptor, and a note on how you
-verified it (without sharing any content).
+See [docs/WRITING_A_PROFILE.md](docs/WRITING_A_PROFILE.md). A pull request for a new app should
+include the catalog entry (`apps/<name>.json`), the profile, a fake-store test, and a note on how
+you verified it (without sharing any content). No Swift changes should be needed.
+
+The UI tests launch the app with `--offline`, so they never touch a real account. Keep it that way.
 
 ## Style
 

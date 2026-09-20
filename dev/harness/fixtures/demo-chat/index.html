@@ -53,7 +53,7 @@
     document.querySelectorAll("time").forEach((el) => el.replaceWith(Object.assign(document.createElement("i"), { textContent: el.textContent })));
     document.getElementById("add").click();
   };
-  addEventListener("chatbridge-result", (e) => {
+  addEventListener("inlet-result", (e) => {
     document.getElementById("out").textContent = JSON.stringify(e.detail, null, 2);
   });
 </script>

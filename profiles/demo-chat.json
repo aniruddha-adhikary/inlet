@@ -3,7 +3,7 @@
   "profileVersion": 1,
   "status": "verified",
   "app": {
-    "id": "dev.chatbridge.demo-chat",
+    "id": "dev.inlet.demo-chat",
     "name": "Demo Chat",
     "surface": "web"
   },

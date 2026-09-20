@@ -3,7 +3,7 @@
 ## Recorded gaps
 
 ### 1. Tapping a result: jump into the real app
-Done: a tap opens the conversation inside Chatbridge at that message, with its neighbours, rows
+Done: a tap opens the conversation inside Inlet at that message, with its neighbours, rows
 annotated for on-screen awareness. Still open: landing in the *real* app. `whatsapp://send?phone=…`
 needs a phone JID (LID-only chats don't expose one); `tg://` links need a username or user id; and
 steering the embedded web session to a chat would need a navigation-only page action, a deliberate
@@ -30,13 +30,16 @@ and sometimes reports the chat title wrongly. Options: a two-pass search (retry 
 a custom `ContactResolver`, or Private Cloud Compute as an explicit opt-in (leaves the device).
 
 ### 6. Privacy controls
-Done: per-chat "stop indexing" (deletes and blocks), per-source disconnect-and-delete, erase
-everything. Still missing: "pause syncing", a retention limit (e.g. keep 90 days), and a first-run
-consent screen that states plainly what is read and where it goes.
+Done: hide a chat from Siri (deletes and blocks), remove an app and its data, erase everything,
+pause an app without signing out, a "Keep" limit per app (Forever, One Year, 30 Days), and a
+welcome screen that states the privacy promise before any sign-in, repeated in the Privacy pane.
+Still open: hiding a chat before it is ever read (today you hide it from a result or from
+"See What's Stored"), and a global pause from the menu bar.
 
 ## Next sources (only real gaps: no Apple app can ingest them, publisher hasn't opened reads)
 Signal (no web client → needs a different adapter), Slack, Discord, Microsoft Teams, Instagram/Messenger DMs.
-Each should be a profile + a login descriptor. Native-app adapters (`sqlite`, `accessibility`)
+Each should be a profile plus a catalog entry in `apps/`. Slack and Discord are already listed in the
+gallery as "Coming Later". Native-app adapters (`sqlite`, `accessibility`)
 conflict with the sandbox and need a separate helper with user-granted access.
 
 ## Generalising beyond messages
@@ -46,5 +49,5 @@ Give indexed entities the domain's real content type, not just the schema:
 
 ## Regression checks after each macOS update
 1. Ask Siri an un-named question about a bridged message.
-2. `Chatbridge --status` and `--verify-storage`.
+2. `Inlet --status` and `--verify-storage`.
 3. UI test suite (AppIntentsTesting) and `node --test`.

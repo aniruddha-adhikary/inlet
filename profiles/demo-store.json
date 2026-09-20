@@ -4,7 +4,7 @@
   "status": "verified",
   "method": "page-store",
   "app": {
-    "id": "dev.chatbridge.demo-store",
+    "id": "dev.inlet.demo-store",
     "name": "Demo Store",
     "surface": "web"
   },

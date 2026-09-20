@@ -43,7 +43,7 @@ WhatsApp Web keeps it in <code>WAWebCollections</code>. The bridge reads it thro
   let n = 5;
   document.getElementById("add").onclick = () => { n += 1; msgs.push(msg(n, "111@c.us", n % 2 === 0, n % 2 ? "111@c.us" : "999@c.us", "chat", "Store message " + n)); };
   document.getElementById("rename").onclick = () => { msgs.forEach((m) => { m.timestamp = m.t; delete m.t; }); document.getElementById("add").click(); };
-  addEventListener("chatbridge-result", (e) => { document.getElementById("out").textContent = JSON.stringify(e.detail, null, 2); });
+  addEventListener("inlet-result", (e) => { document.getElementById("out").textContent = JSON.stringify(e.detail, null, 2); });
 </script>
 <script src="/ext/pagestore.js"></script>
 <script src="/ext/extractor.js"></script>

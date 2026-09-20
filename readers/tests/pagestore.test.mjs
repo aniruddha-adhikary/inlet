@@ -18,7 +18,7 @@ function read(windowProps, store) {
     postMessage: (msg) => posted.push(msg),
   };
   new Function("window", "location", source)(window, { origin: "https://example.test" });
-  listeners[0]({ source: window, data: { tag: "chatbridge", dir: "req", id: "t", store } });
+  listeners[0]({ source: window, data: { tag: "inlet", dir: "req", id: "t", store } });
   return posted[0];
 }
 

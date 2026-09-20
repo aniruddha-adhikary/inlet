@@ -1,7 +1,7 @@
 [project]
-name = "chatbridge-dev-harness"
+name = "inlet-dev-harness"
 version = "0.1.0"
-description = "Browser-based development harness for Chatbridge profiles"
+description = "Browser-based development harness for Inlet profiles"
 requires-python = ">=3.13"
 dependencies = []
 

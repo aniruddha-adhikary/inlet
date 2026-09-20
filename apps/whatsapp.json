@@ -1,0 +1,12 @@
+{
+  "id": "net.whatsapp.web",
+  "name": "WhatsApp",
+  "kind": "messages",
+  "status": "available",
+  "symbol": "message.fill",
+  "tint": "#25D366",
+  "url": "https://web.whatsapp.com/",
+  "allowedHosts": ["web.whatsapp.com"],
+  "loginProbe": "document.querySelector('#pane-side, #side') ? 'connected' : document.querySelector('canvas, [data-ref]') ? 'login' : 'loading'",
+  "needsStorePage": true
+}

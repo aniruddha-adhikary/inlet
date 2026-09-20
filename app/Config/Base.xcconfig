@@ -2,11 +2,11 @@
 //
 // Signing identity lives in Local.xcconfig, which is not committed. Copy
 // Local.xcconfig.example to Local.xcconfig and fill in your own team and bundle id.
-// A free Apple ID "personal team" is enough. A real team is required: Chatbridge uses
+// A free Apple ID "personal team" is enough. A real team is required: Inlet uses
 // the keychain and an application identifier, which macOS refuses in ad-hoc signed apps,
 // and Siri only trusts apps with a proper identity.
 
-CHATBRIDGE_BUNDLE_ID = com.example.chatbridge
+INLET_BUNDLE_ID = com.example.inlet
 DEVELOPMENT_TEAM =
 
 #include? "Local.xcconfig"

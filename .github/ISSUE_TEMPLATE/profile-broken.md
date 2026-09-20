@@ -6,7 +6,7 @@ labels: profile
 
 **Source and profile** (e.g. WhatsApp, `whatsapp-web@2`):
 
-**Output of** `Chatbridge --status` **and the last lines of** `Chatbridge --log-tail 30`
+**Output of** `Inlet --status` **and the last lines of** `Inlet --log-tail 30`
 (these contain no message content):
 
 ```

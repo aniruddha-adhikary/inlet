@@ -1,7 +1,33 @@
 # Writing a profile
 
-A profile tells Chatbridge how to read one app surface. It is data, not code: a JSON file in
+A profile tells Inlet how to read one app surface. It is data, not code: a JSON file in
 `profiles/`, validated at load time, shipped inside the signed app.
+
+## The catalog entry
+
+Before a profile can be used, the app has to exist in the catalog: `apps/<name>.json`.
+
+```json
+{
+  "id": "net.whatsapp.web",
+  "name": "WhatsApp",
+  "kind": "messages",
+  "status": "available",
+  "symbol": "message.fill",
+  "tint": "#25D366",
+  "url": "https://web.whatsapp.com/",
+  "allowedHosts": ["web.whatsapp.com"],
+  "loginProbe": "... returns 'connected', 'login' or 'loading' ...",
+  "needsStorePage": true
+}
+```
+
+- `id` must match `app.id` in the profile.
+- `kind` is what the app contributes: `messages` today; `notes`, `tasks`, `documents` are reserved.
+- `status: "planned"` lists the app in the gallery as "Coming Later". It needs no `url`.
+- `allowedHosts` confines the session: any other navigation opens in the default browser.
+- `loginProbe` may only look at page structure. It must never read content.
+- `symbol` is an SF Symbol. Do not ship another company's logo.
 
 ## Anatomy
 
@@ -50,7 +76,7 @@ page-level values (the open chat's name). Prefer roles and `data-*` attributes o
 `fillRate` is the minimum fraction of visible records that must have each field. When a web app
 changes, extraction quietly degrades; the canary turns that into a hard stop: a failing batch
 stores **nothing**, and three failures in a row quarantine the profile
-(`Chatbridge --release <profile@version>` lifts it). Set thresholds from real data, leaving room
+(`Inlet --release <profile@version>` lifts it). Set thresholds from real data, leaving room
 for legitimately empty fields (media messages have no body).
 
 ## Identity
@@ -67,7 +93,7 @@ change. If two profiles read the same app (store + DOM fallback), make them prod
 2. Write the profile and a fake-store test in `readers/tests/`.
 3. Add a sign-in descriptor in `SourceSession.catalog` (URL, allowed hosts, a login probe that
    reads structure only).
-4. Run the app, connect, and check `Chatbridge --log-tail 30`: look at `canary=` and
+4. Run the app, connect, and check `Inlet --log-tail 30`: look at `canary=` and
    `update …: changed <fields>` (field names only) for churn.
 5. Set `"status": "verified"` and note the date.
 

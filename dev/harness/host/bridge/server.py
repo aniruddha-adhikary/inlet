@@ -63,7 +63,7 @@ def make_handler(store: Store, profiles: dict[str, Profile], schemas: dict, port
     allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
 
     class Handler(BaseHTTPRequestHandler):
-        server_version = "ChatbridgeHarness/0.1"
+        server_version = "InletHarness/0.1"
 
         def log_message(self, fmt, *args):  # quieter than the default
             print(f"  {self.command} {self.path} -> {args[1] if len(args) > 1 else ''}")

@@ -175,5 +175,5 @@
     };
   }
 
-  root.ChatbridgeExtractor = { extract, rankProfiles, compareVersions, ENGINE_VERSION };
+  root.InletExtractor = { extract, rankProfiles, compareVersions, ENGINE_VERSION };
 })(typeof globalThis !== "undefined" ? globalThis : this);

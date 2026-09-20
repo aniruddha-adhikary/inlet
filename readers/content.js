@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const TAG = "chatbridge";
+  const TAG = "inlet";
   const DEBOUNCE_MS = 1500;
   const POLL_MS = 15000; // in-page stores change without touching the DOM
   const CHUNK = 300;
@@ -16,7 +16,7 @@
   // the bridge host itself, so they can fetch same-origin.
   function request(method, path, body) {
     // Embedded in the Mac app's WKWebView: the app relays for us.
-    const native = globalThis.webkit && webkit.messageHandlers && webkit.messageHandlers.chatbridge;
+    const native = globalThis.webkit && webkit.messageHandlers && webkit.messageHandlers.inlet;
     if (native) return native.postMessage({ method, path, body: body || null });
     if (inExtension) {
       return chrome.runtime.sendMessage({ type: "bridge-request", method, path, body });
@@ -36,7 +36,7 @@
   let seq = 0;
 
   function log(...args) {
-    console.debug("[chatbridge]", ...args);
+    console.debug("[inlet]", ...args);
   }
 
   const keyOf = (p) => `${p.profile}@${p.profileVersion}`;
@@ -56,7 +56,7 @@
         removeEventListener("message", onMessage);
         if (!msg.ok) return reject(new Error(msg.error));
         resolve({
-          engineVersion: ChatbridgeExtractor.ENGINE_VERSION,
+          engineVersion: InletExtractor.ENGINE_VERSION,
           profile: profile.profile,
           profileVersion: profile.profileVersion,
           appVersion: msg.appVersion,
@@ -71,7 +71,7 @@
 
   function readWith(profile) {
     if ((profile.method || "dom") === "page-store") return readPageStore(profile);
-    return Promise.resolve(ChatbridgeExtractor.extract(profile, document));
+    return Promise.resolve(InletExtractor.extract(profile, document));
   }
 
   function fillStats(items) {
@@ -116,7 +116,7 @@
         if (!batch.items.length) continue; // nothing visible to this method right now
         const res = await ship(batch);
         if (res && res.status === 423) dead.add(keyOf(profile));
-        if (res) globalThis.dispatchEvent(new CustomEvent("chatbridge-result", { detail: res }));
+        if (res) globalThis.dispatchEvent(new CustomEvent("inlet-result", { detail: res }));
         if (!res || res.ok) return; // a failed canary falls through to the next profile
       }
     } finally {
@@ -137,7 +137,7 @@
       return log("bridge host unreachable", e);
     }
     if (!res || !res.ok) return log("profile fetch failed", res && res.status);
-    candidates = ChatbridgeExtractor.rankProfiles(res.data.profiles, document, location.host, location.pathname);
+    candidates = InletExtractor.rankProfiles(res.data.profiles, document, location.host, location.pathname);
     if (!candidates.length) return log("no profile for", location.host);
     log("profiles:", candidates.map(keyOf).join(" > "));
     new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, characterData: true });

@@ -1,0 +1,12 @@
+{
+  "id": "org.telegram.web",
+  "name": "Telegram",
+  "kind": "messages",
+  "status": "available",
+  "symbol": "paperplane.fill",
+  "tint": "#2AABEE",
+  "url": "https://web.telegram.org/k/",
+  "allowedHosts": ["web.telegram.org"],
+  "loginProbe": "document.querySelector('.chatlist, #column-left .chatlist-container') ? 'connected' : document.querySelector('.auth-pages, .page-sign, .auth-form') ? 'login' : 'loading'",
+  "needsStorePage": true
+}

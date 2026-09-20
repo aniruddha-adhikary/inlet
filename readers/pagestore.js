@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  const TAG = "chatbridge";
+  const TAG = "inlet";
   const MAX_STRING = 64000;
 
   function fnv1a(str) {

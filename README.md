@@ -1,10 +1,13 @@
-# Chatbridge
+# Inlet
 
-**Let Siri AI and Spotlight find your messages from apps that haven't opened their content to the
-system yet.** Sign into the web version of a messenger inside Chatbridge once; it then lives in
-the menu bar, reads new messages — read-only — and donates them to macOS as App Schema entities.
+**Let Siri AI and Spotlight find what's inside apps that haven't opened their content to the
+system yet.** Add an app in Inlet and sign in to it once. Inlet then lives in the menu bar, reads
+new content (read only), and gives it to macOS as App Schema entities.
 
-> *"Who got a new cooker?"* → *"Mira mentioned in Chatbridge that she bought a smart cooker."*
+Messaging apps come first because that is where the gap is widest. The design is not specific to
+chats: every app is a catalog entry plus a profile, and each declares what kind of content it brings.
+
+> *"Who got a new cooker?"* → *"Mira mentioned in Inlet that she bought a smart cooker."*
 
 - macOS 27 (Siri AI) only. WhatsApp Web and Telegram Web today.
 - **Read-only by construction.** No code path can send, edit, delete or mark anything.
@@ -23,13 +26,13 @@ whenever the web apps change. Use it with your own accounts, at your own risk.
    │  readers/extractor.js    or the DOM, when there is no store
    │  readers/content.js      sends only new or changed records
    ▼  script message (isolated content world, origin-checked)
- app/Chatbridge/Core/Ingest.swift    canary → normalize onto a schema → id + keyed hash
- app/Chatbridge/BridgeStore.swift    SQLite; content sealed with AES-GCM (key in the keychain)
+ app/Inlet/Core/Ingest.swift    canary → normalize onto a schema → id + keyed hash
+ app/Inlet/BridgeStore.swift    SQLite; content sealed with AES-GCM (key in the keychain)
    ▼
- app/Chatbridge/Donor.swift          MessageEntity / ConversationEntity / MessagePerson
+ app/Inlet/Donor.swift          MessageEntity / ConversationEntity / MessagePerson
                                      → CSSearchableIndex.indexAppEntities
    ▼
- Siri AI · Spotlight · Shortcuts     + "search … in Chatbridge", answered inside Siri by Apple's
+ Siri AI · Spotlight · Shortcuts     + "search … in Inlet", answered inside Siri by Apple's
                                        on-device model over the same index (SmartAnswer.swift)
 ```
 
@@ -37,12 +40,18 @@ Getting Siri to actually *use* third-party content took more than the documentat
 findings are written up in [docs/HOW_SIRI_FINDS_YOUR_CONTENT.md](docs/HOW_SIRI_FINDS_YOUR_CONTENT.md);
 they should be useful to anyone adopting App Schemas.
 
-## Sources
+## Apps
 
-Each source is a declarative **profile** (`profiles/*.json`): where the data lives, how fields map
+Every app Inlet offers is described by two kinds of file, both shipped inside the signed bundle:
+
+- `apps/<name>.json`: the catalog entry. Name, kind of content, tile symbol and colour, where to
+  sign in, and which hosts the session is confined to. "Add App" lists whatever is in the catalog.
+- `profiles/<name>.json`: how to read it.
+
+Each profile is a declarative description (`profiles/*.json`): where the data lives, how fields map
 onto a normalized schema, and a **canary** that stops ingestion when the web app changes shape.
 
-| Source | Profile | Status |
+| App | Profile | Status |
 | --- | --- | --- |
 | WhatsApp Web | `whatsapp-web@2` (in-memory store), `@1` (DOM fallback) | verified live |
 | Telegram Web K | `telegram-web-k@2` (in-memory mirrors), `@1` (DOM fallback) | verified live |
@@ -64,8 +73,9 @@ Put your team id and a bundle id of your own in `Local.xcconfig`, then:
 ./scripts/install-app.sh
 ```
 
-This builds and installs `/Applications/Chatbridge.app` (Siri ignores apps outside an Applications
-folder) and launches it. Click **Connect**, sign in, and the window hides itself.
+This builds and installs `/Applications/Inlet.app` (Siri ignores apps outside an Applications
+folder) and launches it. After the welcome screen, choose **Add App**, sign in, and the sign-in
+window hides itself. From then on Inlet runs from the menu bar.
 
 A distributable DMG:
 
@@ -82,8 +92,14 @@ The sandbox container is unreadable to other processes, so the app reports on it
 these print message content, except `--smart-test`, which is meant for fixture data.
 
 ```bash
-/Applications/Chatbridge.app/Contents/MacOS/Chatbridge --status
+/Applications/Inlet.app/Contents/MacOS/Inlet --status
 ```
+
+Inside the app, **Help > Diagnostics** (the "?" button) shows counts, reader health, and the log.
+The main window never does.
+
+`--offline` starts the app without loading any web session. Use it whenever you launch repeatedly
+(development, tests), so the services you are signed in to never see a burst of reconnects.
 
 `--verify-storage` · `--log-tail 30` · `--release <profile@version>` · `--wipe-index` ·
 `--seed-fixtures` · `--remove-fixtures` · `--smart-test "question"`
@@ -95,7 +111,7 @@ node --test readers/tests/pagestore.test.mjs
 ```
 
 ```bash
-cd app && xcodebuild -project Chatbridge.xcodeproj -scheme Chatbridge -configuration Debug -derivedDataPath build -allowProvisioningUpdates test
+cd app && xcodebuild -project Inlet.xcodeproj -scheme Inlet -configuration Debug -derivedDataPath build -allowProvisioningUpdates test
 ```
 
 ## Repository layout
@@ -104,7 +120,8 @@ cd app && xcodebuild -project Chatbridge.xcodeproj -scheme Chatbridge -configura
 | --- | --- |
 | `app/` | the Mac app (Swift 6, SwiftUI, App Intents, Core Spotlight, Foundation Models) |
 | `readers/` | in-page readers injected into the web sessions, and their tests |
-| `profiles/`, `schemas/` | source profiles and normalized schemas |
+| `apps/` | the app catalog: one JSON file per app Inlet can offer |
+| `profiles/`, `schemas/` | reader profiles and normalized schemas |
 | `dev/harness/` | optional browser-based harness (Python standard library) with fixture pages for developing profiles |
 | `docs/` | [how Siri finds content](docs/HOW_SIRI_FINDS_YOUR_CONTENT.md), [writing a profile](docs/WRITING_A_PROFILE.md), [roadmap](docs/ROADMAP.md) |
 
