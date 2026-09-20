@@ -4,6 +4,14 @@
 
 # Inlet
 
+<p align="center">
+  <a href="https://github.com/aniruddha-adhikary/inlet/releases/latest/download/Inlet.dmg">
+    <img src="https://img.shields.io/badge/Download_for_Mac-Inlet.dmg-34C759?style=for-the-badge&logo=apple&logoColor=white" alt="Download Inlet for Mac">
+  </a>
+  <br>
+  <sub>Requires macOS 27 on Apple silicon. Signed and notarized. <a href="https://github.com/aniruddha-adhikary/inlet/releases/latest">Release notes and checksum</a></sub>
+</p>
+
 **Let Siri AI and Spotlight find what's inside apps that haven't opened their content to the
 system yet.** Add an app in Inlet and sign in to it once. Inlet then lives in the menu bar, reads
 new content (read only), and gives it to macOS as App Schema entities.
@@ -73,6 +81,8 @@ Want another app? See [docs/WRITING_A_PROFILE.md](docs/WRITING_A_PROFILE.md). On
 please: apps no Apple app can ingest and whose publisher hasn't opened reads to Siri.
 
 ## Build and install
+
+Most people should use the download above. To build it yourself:
 
 Requirements: macOS 27, Xcode 27, an Apple ID (a free personal team works).
 
