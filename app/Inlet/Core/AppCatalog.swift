@@ -64,11 +64,44 @@ nonisolated final class AppCatalog: Sendable {
         self.apps = apps.sorted { ($0.isAvailable ? 0 : 1, $0.name) < ($1.isAvailable ? 0 : 1, $1.name) }
     }
 
-    func app(_ id: String) -> AppDescriptor? { apps.first { $0.id == id } }
+    /// Accepts an app id or an account key.
+    func app(_ key: String) -> AppDescriptor? {
+        let id = Account.appID(ofKey: key)
+        return apps.first { $0.id == id }
+    }
 
-    func name(_ id: String) -> String {
-        if let app = app(id) { return app.name }
-        return id.hasPrefix("dev.inlet.") ? "Demo" : id
+    /// What Siri and the interface call the place an item came from: "WhatsApp", or "WhatsApp Work".
+    func name(_ key: String) -> String {
+        guard let app = app(key) else { return key.hasPrefix("dev.inlet.") ? "Demo" : key }
+        guard let account = AppSettings.accounts.first(where: { $0.key == key }) else { return app.name }
+        let name = account.name.trimmingCharacters(in: .whitespaces)
+        if name.isEmpty || name == app.name { return app.name }
+        return name.localizedCaseInsensitiveContains(app.name) ? name : "\(app.name) \(name)"
+    }
+}
+
+/// One sign-in to an app. People can have as many as they like ("WhatsApp Work", "WhatsApp Home"),
+/// each with its own isolated web session, its own stored items and its own settings.
+nonisolated struct Account: Codable, Identifiable, Sendable, Equatable {
+    /// Scopes everything the account contributes: `<appID>` for the first-ever account of an app
+    /// (what earlier versions stored), `<appID>#<suffix>` for every account added since.
+    let key: String
+    var name: String
+    /// The account's private website data store. nil: the app-wide default store (accounts from before 0.5).
+    let storeID: UUID?
+
+    var id: String { key }
+    var appID: String { Self.appID(ofKey: key) }
+
+    static func appID(ofKey key: String) -> String {
+        key.firstIndex(of: "#").map { String(key[..<$0]) } ?? key
+    }
+
+    static func new(for app: AppDescriptor, among existing: [Account]) -> Account {
+        let store = UUID()
+        let siblings = existing.filter { $0.appID == app.id }.count
+        return Account(key: "\(app.id)#\(store.uuidString.prefix(8).lowercased())",
+                       name: siblings == 0 ? app.name : "\(app.name) \(siblings + 1)", storeID: store)
     }
 }
 
@@ -76,15 +109,15 @@ nonisolated final class AppCatalog: Sendable {
 nonisolated enum AppSettings {
     private static var defaults: UserDefaults { .standard }
 
-    static var added: [String] {
-        get { defaults.stringArray(forKey: "apps.added") ?? [] }
-        set { defaults.set(newValue, forKey: "apps.added") }
+    static var accounts: [Account] {
+        get { defaults.data(forKey: "accounts").flatMap { try? JSONDecoder().decode([Account].self, from: $0) } ?? [] }
+        set { defaults.set(try? JSONEncoder().encode(newValue), forKey: "accounts") }
     }
 
     /// Paused apps stay signed in but are not read, and nothing from them is offered to Siri.
     static func isPaused(_ id: String) -> Bool { defaults.bool(forKey: "app.\(id).paused") }
     static func setPaused(_ id: String, _ paused: Bool) { defaults.set(paused, forKey: "app.\(id).paused") }
-    static var paused: Set<String> { Set(added.filter(isPaused)) }
+    static var paused: Set<String> { Set(accounts.map(\.key).filter(isPaused)) }
 
     /// 0 keeps everything. Otherwise items older than this many days are deleted and ignored.
     static func keepDays(_ id: String) -> Int { defaults.integer(forKey: "app.\(id).keepDays") }
@@ -96,7 +129,7 @@ nonisolated enum AppSettings {
     }
 
     static func forget(_ id: String) {
-        added.removeAll { $0 == id }
+        accounts.removeAll { $0.key == id }
         for key in ["paused", "keepDays"] { defaults.removeObject(forKey: "app.\(id).\(key)") }
         defaults.removeObject(forKey: "source.connected.\(id)")
     }
@@ -111,11 +144,19 @@ nonisolated enum AppSettings {
         set { defaults.set(newValue, forKey: "tour.seen") }
     }
 
-    /// People who connected an app before the app list existed keep their apps.
+    static var hidesMenuBarIcon: Bool {
+        get { defaults.bool(forKey: "settings.hideMenuBarIcon") }
+        set { defaults.set(newValue, forKey: "settings.hideMenuBarIcon") }
+    }
+
+    /// Earlier versions knew one sign-in per app. Those become accounts that keep their key, so
+    /// everything already stored and indexed still belongs to them.
     static func migrate(catalog: AppCatalog) {
-        guard defaults.object(forKey: "apps.added") == nil else { return }
-        added = catalog.apps.filter { defaults.bool(forKey: "source.connected.\($0.id)") }.map(\.id)
-        if !added.isEmpty { hasSeenWelcome = true }
+        guard defaults.object(forKey: "accounts") == nil else { return }
+        let legacy = defaults.stringArray(forKey: "apps.added")
+            ?? catalog.apps.filter { defaults.bool(forKey: "source.connected.\($0.id)") }.map(\.id)
+        accounts = legacy.compactMap { catalog.app($0) }.map { Account(key: $0.id, name: $0.name, storeID: nil) }
+        if !accounts.isEmpty { hasSeenWelcome = true }
     }
 }
 

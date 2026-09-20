@@ -17,9 +17,9 @@ struct DiagnosticsView: View {
                     if let error = model.lastError { LabeledContent("Last error", value: error) }
                 }
                 Section("Apps") {
-                    ForEach(model.sessions, id: \.descriptor.id) { session in
-                        LabeledContent(session.descriptor.name) {
-                            Text("\(String(describing: session.state)) · \((model.countsByApp[session.descriptor.id] ?? 0).formatted()) stored\(session.lastIngest.map { " · last batch: " + $0 } ?? "")")
+                    ForEach(model.sessions, id: \.key) { session in
+                        LabeledContent(session.account.name) {
+                            Text("\(String(describing: session.state)) · \((model.countsByApp[session.key] ?? 0).formatted()) stored\(session.lastIngest.map { " · last batch: " + $0 } ?? "")")
                         }
                     }
                 }

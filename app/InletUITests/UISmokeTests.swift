@@ -15,6 +15,7 @@ final class UISmokeTests: XCTestCase {
 
     /// The welcome and the tour appear on their own for a new user; tests ask for them explicitly.
     private static let introSeen = ["--offline", "--screenshots", "-welcome.seen", "YES", "-tour.seen", "YES"]
+    private static let iconShown = ["-settings.hideMenuBarIcon", "NO"]
 
     /// The "?" menu in the window's toolbar.
     private func help(_ window: XCUIElement, _ item: String) {
@@ -37,7 +38,7 @@ final class UISmokeTests: XCTestCase {
 
     func testMainWindowShowsNoStatisticsAndPrivacyAsksBeforeErasing() throws {
         let app = XCUIApplication()
-        app.launchArguments = Self.introSeen
+        app.launchArguments = Self.introSeen + Self.iconShown
         app.launch()
         let window = openMainWindow(app)
         snap("1-main", window)
@@ -60,7 +61,7 @@ final class UISmokeTests: XCTestCase {
 
     func testGalleryListsAppsFromTheCatalog() throws {
         let app = XCUIApplication()
-        app.launchArguments = Self.introSeen
+        app.launchArguments = Self.introSeen + Self.iconShown
         app.launch()
         let window = openMainWindow(app)
         window.buttons["add-app"].click()
@@ -75,7 +76,7 @@ final class UISmokeTests: XCTestCase {
 
     func testWelcomeAndTourFromTheHelpMenu() throws {
         let app = XCUIApplication()
-        app.launchArguments = Self.introSeen
+        app.launchArguments = Self.introSeen + Self.iconShown
         app.launch()
         let window = openMainWindow(app)
 
@@ -100,9 +101,46 @@ final class UISmokeTests: XCTestCase {
         XCTAssertFalse(window.sheets.firstMatch.waitForExistence(timeout: 2))
     }
 
+    /// Hiding the menu bar icon must not lock the user out: opening the app shows the window.
+    func testWindowOpensByItselfWhenTheMenuBarIconIsHidden() throws {
+        let app = XCUIApplication()
+        app.launchArguments = Self.introSeen + ["-settings.hideMenuBarIcon", "YES"]
+        app.launch()
+        XCTAssertTrue(app.windows["Inlet"].waitForExistence(timeout: 10), "no window and no menu bar icon: the app is unreachable")
+        XCTAssertFalse(app.menuBars.statusItems.firstMatch.exists)
+    }
+
+    func testSettingsHelpAndAbout() throws {
+        let app = XCUIApplication()
+        app.launchArguments = Self.introSeen + Self.iconShown
+        app.launch()
+        let window = openMainWindow(app)
+        XCTAssertTrue(window.textFields["account-name"].firstMatch.waitForExistence(timeout: 5), "accounts can be named")
+
+        help(window, "Inlet Help")
+        let helpWindow = app.windows["Inlet Help"]
+        XCTAssertTrue(helpWindow.waitForExistence(timeout: 5))
+        XCTAssertTrue(helpWindow.staticTexts["Use More Than One Account"].firstMatch.exists)
+        snap("10-help", helpWindow)
+
+        app.activate()
+        help(window, "About Inlet")
+        let about = app.windows["About Inlet"]
+        XCTAssertTrue(about.waitForExistence(timeout: 5))
+        XCTAssertTrue(about.links["adhikary.net"].exists)
+        snap("12-about", about)
+
+        app.activate()
+        help(window, "Settings…")
+        let settings = app.windows["Inlet Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        XCTAssertTrue(settings.descendants(matching: .any)["Show Inlet in the menu bar"].firstMatch.exists, "Settings must offer hiding the menu bar icon")
+        snap("11-settings", settings)
+    }
+
     func testDiagnosticsIsSeparateFromTheMainWindow() throws {
         let app = XCUIApplication()
-        app.launchArguments = Self.introSeen
+        app.launchArguments = Self.introSeen + Self.iconShown
         app.launch()
         let window = openMainWindow(app)
         help(window, "Diagnostics")

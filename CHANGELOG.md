@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0: accounts, Settings, Help
+
+- Any number of accounts per app (two WhatsApps, three Telegrams). Each has its own isolated web
+  session, its own stored items and its own settings, and a name you choose. Siri uses the name
+  ("WhatsApp Work"). Existing sign-ins carry over as the first account of their app.
+- Settings (Inlet > Settings, or the "?" button): show or hide the menu bar icon, open at login.
+  With the icon hidden, opening Inlet shows its window. `--show-menu-bar-icon` brings it back.
+- Inlet Help: a built-in help window with short topics.
+- About Inlet: version, author, license.
+- The Privacy pane no longer says "Never the cloud".
+
 ## 0.4.0: Inlet
 
 The app is now called **Inlet** (it was Chatbridge). It is a general way to bring content from

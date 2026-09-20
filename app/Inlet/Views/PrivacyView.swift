@@ -34,7 +34,7 @@ struct PrivacyView: View {
     }
 }
 
-/// Your apps, then this Mac, then Siri. And no cloud.
+/// Your apps, then this Mac, then Siri.
 private struct DataFlowPicture: View {
     var body: some View {
         VStack(spacing: 14) {
@@ -45,11 +45,9 @@ private struct DataFlowPicture: View {
                 arrow
                 stop("apple.intelligence", "Siri")
             }
-            Label("Never the cloud", systemImage: "icloud.slash")
-                .font(.callout).foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Content goes from your apps to this Mac, then to Siri. It never goes to the cloud.")
+        .accessibilityLabel("Content goes from your apps to this Mac, then to Siri.")
     }
 
     private var arrow: some View {

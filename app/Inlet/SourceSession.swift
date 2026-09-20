@@ -15,10 +15,15 @@ final class SourceSession: NSObject, WKScriptMessageHandlerWithReply, WKNavigati
     }
 
     let descriptor: AppDescriptor
+    /// The sign-in this session belongs to. Its key scopes everything the session contributes.
+    var account: Account {
+        didSet { window?.title = "Sign in to \(account.name)" }
+    }
+    var key: String { account.key }
     private(set) var state: State = .idle {
         didSet {
             guard state != oldValue else { return }
-            DebugLog.write("\(descriptor.name) state: \(state)")
+            DebugLog.write("\(descriptor.name) state: \(state)") // app name only: account names are the user's words
             if state == .connected { UserDefaults.standard.set(true, forKey: connectedKey) }
         }
     }
@@ -31,7 +36,7 @@ final class SourceSession: NSObject, WKScriptMessageHandlerWithReply, WKNavigati
     @ObservationIgnored private var probe: Task<Void, Never>?
     @ObservationIgnored private var autoHidden = false
 
-    private var connectedKey: String { "source.connected.\(descriptor.id)" }
+    private var connectedKey: String { "source.connected.\(account.key)" }
     /// True once the user has signed in at least once: only then is the session restored silently at launch.
     var wasConnected: Bool { UserDefaults.standard.bool(forKey: connectedKey) }
 
@@ -40,7 +45,10 @@ final class SourceSession: NSObject, WKScriptMessageHandlerWithReply, WKNavigati
     private static let userAgent =
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
 
-    init(_ descriptor: AppDescriptor) { self.descriptor = descriptor }
+    init(_ account: Account, _ descriptor: AppDescriptor) {
+        self.account = account
+        self.descriptor = descriptor
+    }
 
     // MARK: Lifecycle
 
@@ -76,6 +84,12 @@ final class SourceSession: NSObject, WKScriptMessageHandlerWithReply, WKNavigati
         pause()
         lastIngest = nil
         UserDefaults.standard.set(false, forKey: connectedKey)
+        if let storeID = account.storeID {
+            // The web view must be gone before its store can be removed.
+            try? await Task.sleep(for: .milliseconds(300))
+            try? await WKWebsiteDataStore.remove(forIdentifier: storeID)
+            return
+        }
         let store = WKWebsiteDataStore.default()
         let records = await store.dataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes())
         let mine = records.filter { r in descriptor.allowedHosts.contains { $0.hasSuffix(r.displayName) || r.displayName.hasSuffix($0) } }
@@ -84,7 +98,8 @@ final class SourceSession: NSObject, WKScriptMessageHandlerWithReply, WKNavigati
 
     private func build() {
         let config = WKWebViewConfiguration()
-        config.websiteDataStore = .default() // keeps the linked-device session across launches
+        // Each account has its own website data, so two sign-ins to one service never see each other.
+        config.websiteDataStore = account.storeID.map { WKWebsiteDataStore(forIdentifier: $0) } ?? .default()
         config.preferences.javaScriptCanOpenWindowsAutomatically = false
         let content = config.userContentController
         content.addScriptMessageHandler(self, contentWorld: Self.world, name: "inlet")
@@ -104,7 +119,7 @@ final class SourceSession: NSObject, WKScriptMessageHandlerWithReply, WKNavigati
         let win = NSWindow(
             contentRect: view.frame, styleMask: [.titled, .closable, .resizable, .miniaturizable],
             backing: .buffered, defer: false)
-        win.title = "Sign in to \(descriptor.name)"
+        win.title = "Sign in to \(account.name)"
         win.contentView = SignInChrome.wrap(view, appName: descriptor.name)
         win.isReleasedWhenClosed = false
         win.delegate = self
@@ -188,7 +203,8 @@ final class SourceSession: NSObject, WKScriptMessageHandlerWithReply, WKNavigati
         }
         if method == "POST", path == "/ingest", let batch = body["body"] as? [String: Any],
            let batchJSON = try? JSONSerialization.data(withJSONObject: batch) {
-            let result = await Task.detached { Ingest.run(batchJSON: batchJSON, pageHost: pageHost) }.value
+            let accountKey = account.key
+            let result = await Task.detached { Ingest.run(batchJSON: batchJSON, pageHost: pageHost, accountKey: accountKey) }.value
             let b = ((try? JSONSerialization.jsonObject(with: result.bodyJSON)) as? [String: Any]) ?? [:]
             if result.status == 200 {
                 lastIngest = "\(b["inserted"] ?? 0) new · \(b["updated"] ?? 0) updated"

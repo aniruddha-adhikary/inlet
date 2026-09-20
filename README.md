@@ -87,7 +87,7 @@ Put your team id and a bundle id of your own in `Local.xcconfig`, then:
 ```
 
 This builds and installs `/Applications/Inlet.app` (Siri ignores apps outside an Applications
-folder) and launches it. After the welcome screen, choose **Add App**, sign in, and the sign-in
+folder) and launches it. After the welcome screen, choose **Add Account**, sign in, and the sign-in
 window hides itself. From then on Inlet runs from the menu bar.
 
 A distributable DMG:
@@ -114,7 +114,7 @@ The main window never does.
 `--offline` starts the app without loading any web session. Use it whenever you launch repeatedly
 (development, tests), so the services you are signed in to never see a burst of reconnects.
 
-`--verify-storage` · `--log-tail 30` · `--release <profile@version>` · `--wipe-index` ·
+`--show-menu-bar-icon` · `--verify-storage` · `--log-tail 30` · `--release <profile@version>` · `--wipe-index` ·
 `--seed-fixtures` · `--remove-fixtures` · `--smart-test "question"`
 
 ## Tests

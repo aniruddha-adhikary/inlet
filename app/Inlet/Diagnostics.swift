@@ -66,12 +66,18 @@ enum Diagnostics {
             print("released \(args[i + 1])")
             exit(0)
         }
+        if args.contains("--show-menu-bar-icon") {
+            AppSettings.hidesMenuBarIcon = false
+            print("menu bar icon will be shown")
+            exit(0)
+        }
         if args.contains("--status") {
             let store = BridgeStore.default
             let c = (try? store.counts()) ?? (0, 0)
             print("messages: \(c.0) (pending donation: \(c.1))")
             for (app, n) in store.countsByApp().sorted(by: { $0.key < $1.key }) { print("  \(app): \(n)") }
             for s in store.profileStates() { print("  profile \(s.key): \(s.status)") }
+            print("accounts: \(AppSettings.accounts.count), menu bar icon hidden: \(AppSettings.hidesMenuBarIcon)")
             print("data: \(AppPaths.supportDirectory.path)")
             exit(0)
         }

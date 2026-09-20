@@ -15,7 +15,7 @@ struct GalleryView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Add App").font(.headline)
+                Text("Add Account").font(.headline)
                 Spacer()
                 TextField("Search", text: $query)
                     .textFieldStyle(.roundedBorder)
@@ -26,7 +26,7 @@ struct GalleryView: View {
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], spacing: 16) {
                     ForEach(apps) { app in
-                        GalleryTile(app: app, isAdded: model.session(app.id) != nil) { model.add(app) }
+                        GalleryTile(app: app, accounts: model.accountCount(for: app)) { model.add(app) }
                     }
                 }
                 .padding(.horizontal, 16)
@@ -48,7 +48,7 @@ struct GalleryView: View {
 
 private struct GalleryTile: View {
     let app: AppDescriptor
-    let isAdded: Bool
+    let accounts: Int
     let add: () -> Void
 
     var body: some View {
@@ -56,10 +56,12 @@ private struct GalleryTile: View {
             VStack(spacing: 6) {
                 AppTile(app: app, size: 56, dimmed: !app.isAvailable)
                     .overlay(alignment: .bottomTrailing) {
-                        if isAdded {
-                            Image(systemName: "checkmark.circle.fill")
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .green)
+                        if accounts > 0 {
+                            // How many accounts you already have. Adding another is always allowed.
+                            Text("\(accounts)")
+                                .font(.caption2.weight(.bold)).foregroundStyle(.white)
+                                .frame(minWidth: 18, minHeight: 18)
+                                .background(.green, in: .circle)
                                 .offset(x: 5, y: 5)
                         }
                     }
@@ -70,8 +72,8 @@ private struct GalleryTile: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .disabled(!app.isAvailable || isAdded)
+        .disabled(!app.isAvailable)
         .accessibilityIdentifier("gallery-\(app.id)")
-        .accessibilityLabel(app.isAvailable ? (isAdded ? "\(app.name), added" : "Add \(app.name)") : "\(app.name), coming later")
+        .accessibilityLabel(app.isAvailable ? (accounts > 0 ? "Add another \(app.name) account" : "Add \(app.name)") : "\(app.name), coming later")
     }
 }

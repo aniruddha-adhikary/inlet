@@ -58,7 +58,7 @@ final class AppModel {
         // Offline UI tests take the README screenshots: show the everyday state rather than "Paused".
         if CommandLine.arguments.contains("--screenshots") { return .upToDate }
         #endif
-        if AppSettings.isPaused(session.descriptor.id) || SourceSession.isOffline { return .paused }
+        if AppSettings.isPaused(session.key) || SourceSession.isOffline { return .paused }
         switch session.state {
         case .connected: return .upToDate
         case .loading: return .updating
@@ -75,17 +75,20 @@ final class AppModel {
         IndexDelegate.shared.install()
         InletShortcuts.updateAppShortcutParameters()
         AppSettings.migrate(catalog: .shared)
-        sessions = AppSettings.added.compactMap { AppCatalog.shared.app($0) }.filter(\.isAvailable).map { SourceSession($0) }
+        sessions = AppSettings.accounts.compactMap { account in
+            AppCatalog.shared.app(account.key).flatMap { $0.isAvailable ? SourceSession(account, $0) : nil }
+        }
         selection = sessions.first?.descriptor.id
         loop = Task {
             let store = store
             await Task.detached { await Donor.migrateIndexIfNeeded(store: store) }.value
             // Restore earlier sign-ins without showing any window.
-            for session in sessions where session.wasConnected && !AppSettings.isPaused(session.descriptor.id) {
+            for session in sessions where session.wasConnected && !AppSettings.isPaused(session.key) {
                 session.start(showWindow: false)
             }
             if !AppSettings.hasSeenWelcome { showsWelcome = true }
-            if sessions.isEmpty || !AppSettings.hasSeenWelcome { showMainWindow() }
+            // With the menu bar icon hidden, opening the app is the only way to reach it: show the window.
+            if sessions.isEmpty || !AppSettings.hasSeenWelcome || AppSettings.hidesMenuBarIcon { showMainWindow() }
             while !Task.isCancelled {
                 await sync()
                 try? await Task.sleep(for: .seconds(10))
@@ -118,39 +121,56 @@ final class AppModel {
 
     // MARK: Apps
 
-    /// Adds an app and opens its sign-in window.
+    /// Adds another account for an app and opens its sign-in window. There is no limit per app.
     func add(_ app: AppDescriptor) {
         guard app.isAvailable else { return }
-        if !sessions.contains(where: { $0.descriptor.id == app.id }) {
-            sessions.append(SourceSession(app))
-            AppSettings.added.append(app.id)
-        }
-        selection = app.id
+        let account = Account.new(for: app, among: AppSettings.accounts)
+        AppSettings.accounts.append(account)
+        let session = SourceSession(account, app)
+        sessions.append(session)
+        selection = account.key
         showsGallery = false
-        session(app.id)?.start(showWindow: true)
+        session.start(showWindow: true)
     }
 
-    func session(_ id: String) -> SourceSession? { sessions.first { $0.descriptor.id == id } }
+    /// The name is the user's own ("Work", "Family"). Siri sees it too, so what was given is given again.
+    func rename(_ session: SourceSession, to name: String) async {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, name != session.account.name else { return }
+        session.account.name = name
+        var accounts = AppSettings.accounts
+        if let i = accounts.firstIndex(where: { $0.key == session.key }) { accounts[i].name = name }
+        AppSettings.accounts = accounts
+        settingsRevision += 1
+        let store = store, key = session.key
+        try? await Task.detached { try store.resetDonations(appID: key) }.value
+        UserDefaults.standard.set(true, forKey: "graph.stale")
+        await sync()
+    }
+
+    func accountCount(for app: AppDescriptor) -> Int { sessions.filter { $0.descriptor.id == app.id }.count }
+
+    func session(_ id: String) -> SourceSession? { sessions.first { $0.key == id } }
 
     /// Signs out of one app and removes everything it contributed, from this Mac and from Siri and Spotlight.
     func remove(_ session: SourceSession) async {
         await session.disconnect()
         let store = store
-        let appID = session.descriptor.id
-        sessions.removeAll { $0.descriptor.id == appID }
+        let appID = session.key
+        sessions.removeAll { $0.key == appID }
         AppSettings.forget(appID)
         if selection == appID { selection = sessions.first?.descriptor.id }
         try? await Task.detached {
             try store.deleteEverything(appID: appID)
             try await Donor.rebuildIndex(from: store)
         }.value
-        DebugLog.write("removed app \(session.descriptor.name) and its data")
+        DebugLog.write("removed a \(session.descriptor.name) account and its data")
         await sync()
     }
 
     /// Off: the app stays signed in but is no longer read, and Siri loses what it contributed.
     func setAvailable(_ available: Bool, for session: SourceSession) async {
-        let appID = session.descriptor.id
+        let appID = session.key
         AppSettings.setPaused(appID, !available)
         settingsRevision += 1
         DebugLog.write("\(session.descriptor.name) \(available ? "resumed" : "paused")")
@@ -166,7 +186,7 @@ final class AppModel {
     }
 
     func setKeepDays(_ days: Int, for session: SourceSession) async {
-        AppSettings.setKeepDays(session.descriptor.id, days)
+        AppSettings.setKeepDays(session.key, days)
         settingsRevision += 1
         await sync()
     }
@@ -174,7 +194,7 @@ final class AppModel {
     private func enforceRetention() async {
         let store = store
         for session in sessions {
-            let appID = session.descriptor.id
+            let appID = session.key
             guard let cutoff = AppSettings.cutoff(appID) else { continue }
             let removed = (try? await Task.detached { try store.prune(appID: appID, olderThan: cutoff) }.value) ?? []
             guard !removed.isEmpty else { continue }
@@ -186,7 +206,7 @@ final class AppModel {
     /// Signs out everywhere, erases stored content, clears the index and destroys the encryption key.
     func eraseEverything() async {
         for session in sessions { await session.disconnect() }
-        for session in sessions { AppSettings.forget(session.descriptor.id) }
+        for session in sessions { AppSettings.forget(session.key) }
         sessions = []
         selection = nil
         focus = nil
@@ -247,7 +267,17 @@ final class AppModel {
     func showMainWindow() { show(window: "main") }
     func showDiagnostics() { show(window: "diagnostics") }
 
-    private func show(window id: String) {
-        if let openWindow { openWindow(id) } else { queuedWindows.append(id) }
+    func show(window id: String) {
+        if let openWindow { return openWindow(id) }
+        // No SwiftUI view is alive yet (menu bar icon hidden, no window open). SwiftUI lists
+        // every Window scene in the Window menu; choosing it there opens it.
+        let titles = ["main": "Inlet", "diagnostics": "Diagnostics", "help": "Inlet Help", "about": "About Inlet"]
+        if let item = NSApp.windowsMenu?.items.first(where: { $0.title == titles[id] }), let action = item.action {
+            NSApp.setActivationPolicy(.regular)
+            NSApp.sendAction(action, to: item.target, from: item)
+            NSApp.activate()
+        } else {
+            queuedWindows.append(id)
+        }
     }
 }

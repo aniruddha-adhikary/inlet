@@ -4,10 +4,16 @@ import SwiftUI
 @main
 struct InletApp: App {
     @State private var model = AppModel.shared
+    @AppStorage("settings.hideMenuBarIcon") private var hidesMenuBarIcon = false
 
     init() {
         // Headless by default: reading starts without any window.
         Task { @MainActor in AppModel.shared.start() }
+    }
+
+    /// Writes only real changes: an unconditional write re-invalidates the scene, which sets it again, forever.
+    private var menuBarIconIsShown: Binding<Bool> {
+        Binding(get: { !hidesMenuBarIcon }, set: { shown in if hidesMenuBarIcon == shown { hidesMenuBarIcon = !shown } })
     }
 
     var body: some Scene {
@@ -17,11 +23,17 @@ struct InletApp: App {
         .defaultSize(width: 760, height: 520)
         .defaultLaunchBehavior(.suppressed)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About Inlet") { model.show(window: "about") }
+            }
             CommandGroup(replacing: .newItem) {
-                Button("Add App…") { model.showMainWindow(); model.showsGallery = true }
+                Button("Add Account…") { model.showMainWindow(); model.showsGallery = true }
                     .keyboardShortcut("n")
             }
             CommandGroup(replacing: .help) {
+                Button("Inlet Help") { model.show(window: "help") }
+                    .keyboardShortcut("?")
+                Divider()
                 Button("Welcome to Inlet") { model.showMainWindow(); model.showsWelcome = true }
                 Button("Take the Tour") { model.showMainWindow(); model.showsTour = true }
                 Divider()
@@ -36,12 +48,30 @@ struct InletApp: App {
         .defaultSize(width: 620, height: 480)
         .defaultLaunchBehavior(.suppressed)
 
-        MenuBarExtra {
-            ForEach(model.sessions.filter { model.status(of: $0).needsUser }, id: \.descriptor.id) { session in
-                Button("Sign In to \(session.descriptor.name)…") { session.start(showWindow: true) }
+        Window("Inlet Help", id: "help") {
+            HelpView()
+        }
+        .defaultSize(width: 760, height: 520)
+        .defaultLaunchBehavior(.suppressed)
+
+        Window("About Inlet", id: "about") {
+            AboutView()
+        }
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
+
+        Settings {
+            SettingsView(model: model)
+        }
+
+        MenuBarExtra(isInserted: menuBarIconIsShown) {
+            ForEach(model.sessions.filter { model.status(of: $0).needsUser }, id: \.key) { session in
+                Button("Sign In to \(session.account.name)…") { session.start(showWindow: true) }
             }
             if model.needsAttention { Divider() }
             Button("Open Inlet") { model.showMainWindow() }
+            SettingsLink { Text("Settings…") }
             if NSEvent.modifierFlags.contains(.option) {
                 Button("Diagnostics") { model.showDiagnostics() }
             }
@@ -90,11 +120,26 @@ struct MenuBarLabel: View {
             if model.needsAttention { Image(nsImage: Self.badgedIcon) } else { Image(systemName: Self.symbolName) }
         }
             .accessibilityLabel(model.needsAttention ? "Inlet needs your attention" : "Inlet")
-            .onAppear {
-                model.openWindow = { id in
-                    openWindow(id: id)
-                    NSApp.activate()
-                }
+            .capturesOpenWindow(for: model)
+    }
+}
+
+extension View {
+    /// Hands the model SwiftUI's way of opening windows. Applied to every long-lived view,
+    /// because the menu bar item (the usual carrier) can be hidden in Settings.
+    func capturesOpenWindow(for model: AppModel) -> some View { modifier(OpenWindowCapture(model: model)) }
+}
+
+private struct OpenWindowCapture: ViewModifier {
+    let model: AppModel
+    @Environment(\.openWindow) private var openWindow
+
+    func body(content: Content) -> some View {
+        content.onAppear {
+            model.openWindow = { id in
+                openWindow(id: id)
+                NSApp.activate()
             }
+        }
     }
 }

@@ -9,10 +9,10 @@ struct MainView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: $model.selection) {
-                Section("Apps") {
-                    ForEach(model.sessions, id: \.descriptor.id) { session in
-                        SidebarRow(app: session.descriptor, status: model.status(of: session))
-                            .tag(session.descriptor.id)
+                Section("Accounts") {
+                    ForEach(model.sessions, id: \.key) { session in
+                        SidebarRow(app: session.descriptor, name: session.account.name, status: model.status(of: session))
+                            .tag(session.key)
                     }
                 }
                 Section {
@@ -21,7 +21,7 @@ struct MainView: View {
             }
             .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 260)
             .safeAreaInset(edge: .bottom, alignment: .leading) {
-                Button { model.showsGallery = true } label: { Label("Add App", systemImage: "plus") }
+                Button { model.showsGallery = true } label: { Label("Add Account", systemImage: "plus") }
                     .buttonStyle(.borderless)
                     .padding(12)
                     .accessibilityIdentifier("add-app")
@@ -33,6 +33,10 @@ struct MainView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
+                    Button("Inlet Help") { model.show(window: "help") }
+                    SettingsLink { Text("Settings…") }
+                    Button("About Inlet") { model.show(window: "about") }
+                    Divider()
                     Button("Welcome to Inlet") { model.showsWelcome = true }
                     Button("Take the Tour") { model.showsTour = true }
                     Divider()
@@ -60,6 +64,7 @@ struct MainView: View {
             }
         }
         // A menu bar app has no Dock icon or menus. While its window is open it becomes a regular Mac app.
+        .capturesOpenWindow(for: model)
         .onAppear { NSApp.setActivationPolicy(.regular) }
         .onDisappear { NSApp.setActivationPolicy(.accessory) }
     }
@@ -73,11 +78,11 @@ struct MainView: View {
             AppDetailView(model: model, session: session)
         } else {
             ContentUnavailableView {
-                Label("Add Your First App", systemImage: "square.grid.2x2")
+                Label("Add Your First Account", systemImage: "square.grid.2x2")
             } description: {
                 Text("Choose an app, sign in, and Siri can find what's in it.")
             } actions: {
-                Button("Add App…") { model.showsGallery = true }.buttonStyle(.borderedProminent)
+                Button("Add Account…") { model.showsGallery = true }.buttonStyle(.borderedProminent)
             }
         }
     }
@@ -85,17 +90,18 @@ struct MainView: View {
 
 private struct SidebarRow: View {
     let app: AppDescriptor
+    let name: String
     let status: AppModel.Status
 
     var body: some View {
         HStack(spacing: 8) {
             AppTile(app: app, size: 22)
-            Text(app.name)
+            Text(name).lineLimit(1)
             Spacer()
             StatusDot(status: status)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(app.name), \(status.label)")
+        .accessibilityLabel("\(name), \(status.label)")
     }
 }
 
