@@ -1,0 +1,134 @@
+{
+  "profile": "demo-store",
+  "profileVersion": 1,
+  "status": "verified",
+  "method": "page-store",
+  "app": {
+    "id": "dev.chatbridge.demo-store",
+    "name": "Demo Store",
+    "surface": "web"
+  },
+  "match": {
+    "hosts": [
+      "127.0.0.1:8787",
+      "localhost:8787"
+    ],
+    "paths": [
+      "/fixture/demo-store/"
+    ]
+  },
+  "schema": "messages.message",
+  "store": {
+    "require": "DemoCollections",
+    "collection": "Msg",
+    "versionPath": "Debug.VERSION",
+    "where": {
+      "type": [
+        "chat",
+        "image"
+      ]
+    },
+    "fields": {
+      "sourceId": {
+        "path": "id.id"
+      },
+      "conversationId": {
+        "path": "id.remote",
+        "as": "string"
+      },
+      "conversationName": {
+        "path": "id.remote",
+        "as": "string",
+        "lookup": {
+          "collection": "Chat",
+          "paths": [
+            "formattedTitle",
+            "name"
+          ]
+        }
+      },
+      "direction": {
+        "path": "id.fromMe",
+        "map": {
+          "true": "outgoing",
+          "false": "incoming"
+        }
+      },
+      "sender": {
+        "anyOf": [
+          {
+            "paths": [
+              "author",
+              "from"
+            ],
+            "as": "string",
+            "lookup": {
+              "collection": "Contact",
+              "paths": [
+                "name",
+                "pushname",
+                "verifiedName",
+                "formattedName"
+              ]
+            }
+          },
+          {
+            "path": "notifyName"
+          },
+          {
+            "switch": "id.remote.server",
+            "cases": {
+              "g.us": {
+                "const": null
+              },
+              "default": {
+                "path": "id.remote",
+                "as": "string",
+                "lookup": {
+                  "collection": "Chat",
+                  "paths": [
+                    "formattedTitle",
+                    "name"
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "sentAt": {
+        "path": "t",
+        "parse": "epochSeconds"
+      },
+      "body": {
+        "switch": "type",
+        "cases": {
+          "chat": {
+            "path": "body"
+          },
+          "default": {
+            "path": "caption"
+          }
+        }
+      },
+      "senderId": {
+        "paths": [
+          "author",
+          "from"
+        ],
+        "as": "string"
+      }
+    }
+  },
+  "canary": {
+    "minItems": 1,
+    "fillRate": {
+      "sourceId": 1.0,
+      "conversationId": 1.0,
+      "sentAt": 0.99,
+      "sender": 0.7,
+      "body": 0.7
+    }
+  },
+  "deepLink": "http://127.0.0.1:8787/fixture/demo-store/"
+}

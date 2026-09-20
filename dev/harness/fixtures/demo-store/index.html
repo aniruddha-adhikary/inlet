@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Demo Store (bridge fixture)</title>
+<style>
+  body { font: 15px/1.4 system-ui; max-width: 640px; margin: 2rem auto; padding: 0 16px; }
+  pre { background: #111; color: #9f9; padding: 12px; border-radius: 8px; white-space: pre-wrap; min-height: 3em; }
+</style>
+</head>
+<body>
+<h1>Demo Store</h1>
+<p>Nothing on this page renders messages: the data lives only in an in-page module store, the way
+WhatsApp Web keeps it in <code>WAWebCollections</code>. The bridge reads it through the
+<code>page-store</code> method.</p>
+<button id="add">New message in store</button>
+<button id="rename">Simulate upstream rename (t → timestamp)</button>
+<h3>Last bridge response</h3>
+<pre id="out">waiting…</pre>
+
+<script>
+  // A miniature of the shape WhatsApp Web exposes: id objects that only
+  // stringify usefully, collections with getModelsArray()/get().
+  const wid = (s) => ({ server: s.split("@")[1], toString: () => s });
+  const collection = (rows, key) => ({ getModelsArray: () => rows, get: (id) => rows.find((r) => String(r[key]) === String(id)) });
+  const chats = [{ id: wid("111@c.us"), formattedTitle: "Flare" }, { id: wid("222@g.us"), name: "Flat hunt" }];
+  const contacts = [{ id: wid("111@c.us"), name: "Flare" }, { id: wid("999@c.us"), pushname: "Me" }, { id: wid("333@c.us"), pushname: "Broker Raj" }];
+  const msg = (n, remote, fromMe, from, type, body, caption, author) => ({
+    id: { id: "3EB0" + String(n).padStart(8, "0"), fromMe, remote: wid(remote), toString: () => `${fromMe}_${remote}_${n}` },
+    type, body, caption, author: author && wid(author), from: wid(from), t: 1789900000 + n * 60,
+  });
+  const msgs = [
+    msg(1, "111@c.us", false, "111@c.us", "chat", "Did you watch Dune Part Three yet?"),
+    msg(2, "111@c.us", true, "999@c.us", "chat", "Not yet, booking IMAX for Saturday."),
+    msg(3, "222@g.us", false, "222@g.us", "chat", "The 2BHK in Indiranagar is 48k, visit at 6pm.", undefined, "333@c.us"),
+    msg(4, "222@g.us", true, "999@c.us", "image", "/9j/4AAQSkZJRgABAQ-THUMBNAIL-BYTES", "Floor plan of the flat"),
+    msg(5, "111@c.us", false, "111@c.us", "call_log", ""),
+  ];
+  const modules = { DemoCollections: { Msg: collection(msgs, "id"), Chat: collection(chats, "id"), Contact: collection(contacts, "id") } };
+  window.require = (name) => modules[name];
+  window.Debug = { VERSION: "2.3000.1" };
+
+  let n = 5;
+  document.getElementById("add").onclick = () => { n += 1; msgs.push(msg(n, "111@c.us", n % 2 === 0, n % 2 ? "111@c.us" : "999@c.us", "chat", "Store message " + n)); };
+  document.getElementById("rename").onclick = () => { msgs.forEach((m) => { m.timestamp = m.t; delete m.t; }); document.getElementById("add").click(); };
+  addEventListener("chatbridge-result", (e) => { document.getElementById("out").textContent = JSON.stringify(e.detail, null, 2); });
+</script>
+<script src="/ext/pagestore.js"></script>
+<script src="/ext/extractor.js"></script>
+<script src="/ext/content.js"></script>
+</body>
+</html>

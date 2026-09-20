@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="app-version" content="1.4.2">
+<title>Demo Chat (bridge fixture)</title>
+<style>
+  body { font: 15px/1.4 system-ui; max-width: 640px; margin: 2rem auto; padding: 0 16px; }
+  ul { list-style: none; padding: 0; }
+  li { margin: 8px 0; padding: 8px 12px; border-radius: 12px; background: #eee; width: fit-content; max-width: 80%; }
+  li[data-out="1"] { margin-left: auto; background: #cfe9ff; }
+  li small { display: block; opacity: .6; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1.5rem; }
+  pre { background: #111; color: #9f9; padding: 12px; border-radius: 8px; white-space: pre-wrap; min-height: 3em; }
+</style>
+</head>
+<body>
+<header><h1>Flare</h1></header>
+<main data-chat-id="chat-flare-001">
+  <ul id="log">
+    <li data-msg-id="m1" data-out="0"><small><span data-role="author">Flare</span> · <time datetime="2026-09-19T18:02:00+05:30">18:02</time></small><span data-role="text">Did you watch Dune Part Three yet?</span></li>
+    <li data-msg-id="m2" data-out="1"><small><span data-role="author">Me</span> · <time datetime="2026-09-19T18:03:00+05:30">18:03</time></small><span data-role="text">Not yet, booking tickets for Saturday at the IMAX.</span></li>
+    <li data-msg-id="m3" data-out="0"><small><span data-role="author">Flare</span> · <time datetime="2026-09-19T18:05:00+05:30">18:05</time></small><span data-role="text">Get me one too. Also the landlord wants the rent by the 5th.</span></li>
+    <li data-msg-id="m4" data-out="1"><small><span data-role="author">Me</span> · <time datetime="2026-09-19T18:06:00+05:30">18:06</time></small></li>
+  </ul>
+</main>
+
+<div class="controls">
+  <button id="add">New message</button>
+  <button id="edit">Edit m2</button>
+  <button id="break">Simulate upstream redesign</button>
+</div>
+<h3>Last bridge response</h3>
+<pre id="out">waiting…</pre>
+
+<script>
+  let n = 4;
+  const log = document.getElementById("log");
+  document.getElementById("add").onclick = () => {
+    n += 1;
+    const li = document.createElement("li");
+    li.dataset.msgId = "m" + n;
+    li.dataset.out = n % 2 ? "0" : "1";
+    li.innerHTML = `<small><span data-role="author">${n % 2 ? "Flare" : "Me"}</span> · <time datetime="${new Date().toISOString()}">now</time></small><span data-role="text">Message number ${n}</span>`;
+    log.append(li);
+  };
+  document.getElementById("edit").onclick = () => {
+    document.querySelector("[data-msg-id=m2] [data-role=text]").textContent += " (edited)";
+  };
+  // What an upstream redesign looks like to us: same content, new markup.
+  document.getElementById("break").onclick = () => {
+    document.querySelectorAll("[data-role=author]").forEach((el) => el.removeAttribute("data-role"));
+    document.querySelectorAll("time").forEach((el) => el.replaceWith(Object.assign(document.createElement("i"), { textContent: el.textContent })));
+    document.getElementById("add").click();
+  };
+  addEventListener("chatbridge-result", (e) => {
+    document.getElementById("out").textContent = JSON.stringify(e.detail, null, 2);
+  });
+</script>
+<script src="/ext/extractor.js"></script>
+<script src="/ext/content.js"></script>
+</body>
+</html>

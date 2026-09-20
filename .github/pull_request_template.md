@@ -1,0 +1,4 @@
+- [ ] Stays read-only (no calls into a source app, no sending/marking/fetching)
+- [ ] No message content or personal data in code, tests, fixtures or logs
+- [ ] Tests pass (`node --test readers/tests/pagestore.test.mjs`; Xcode tests if Swift changed)
+- [ ] New or changed profile: note how it was verified, without sharing content

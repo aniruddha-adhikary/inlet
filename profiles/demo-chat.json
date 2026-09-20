@@ -1,0 +1,72 @@
+{
+  "profile": "demo-chat",
+  "profileVersion": 1,
+  "status": "verified",
+  "app": {
+    "id": "dev.chatbridge.demo-chat",
+    "name": "Demo Chat",
+    "surface": "web"
+  },
+  "match": {
+    "hosts": [
+      "127.0.0.1:8787",
+      "localhost:8787"
+    ],
+    "versions": {
+      "min": "1.0",
+      "max": "1.99"
+    },
+    "paths": [
+      "/fixture/demo-chat/"
+    ]
+  },
+  "versionProbe": {
+    "selector": "meta[name='app-version']",
+    "get": "attr:content"
+  },
+  "schema": "messages.message",
+  "extract": {
+    "context": {
+      "conversationId": {
+        "selector": "main[data-chat-id]",
+        "get": "attr:data-chat-id"
+      },
+      "conversationName": {
+        "selector": "header h1"
+      }
+    },
+    "item": "li[data-msg-id]",
+    "fields": {
+      "sourceId": {
+        "get": "attr:data-msg-id"
+      },
+      "sender": {
+        "selector": "[data-role='author']"
+      },
+      "direction": {
+        "get": "attr:data-out",
+        "map": {
+          "1": "outgoing",
+          "0": "incoming"
+        }
+      },
+      "body": {
+        "selector": "[data-role='text']"
+      },
+      "sentAt": {
+        "selector": "time",
+        "get": "attr:datetime"
+      }
+    }
+  },
+  "canary": {
+    "minItems": 1,
+    "fillRate": {
+      "sourceId": 1.0,
+      "sender": 0.9,
+      "sentAt": 0.9,
+      "body": 0.5
+    }
+  },
+  "deepLink": "http://127.0.0.1:8787/fixture/demo-chat/#{sourceId}"
+}

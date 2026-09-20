@@ -1,0 +1,27 @@
+{
+  "profile": "telegram-web-k",
+  "profileVersion": 1,
+  "status": "unverified",
+  "app": { "id": "org.telegram.web", "name": "Telegram", "surface": "web" },
+  "match": { "hosts": ["web.telegram.org"] },
+  "schema": "messages.message",
+  "extract": {
+    "context": {
+      "conversationName": { "selector": ".chat-info .peer-title" }
+    },
+    "item": ".bubbles .bubble[data-mid]",
+    "fields": {
+      "sourceId": { "get": "attr:data-mid" },
+      "conversationId": { "get": "attr:data-peer-id" },
+      "direction": { "get": "matches:.is-out","map": { "true": "outgoing", "false": "incoming" } },
+      "sender": { "selector": ".name .peer-title" },
+      "sentAt": { "get": "attr:data-timestamp", "parse": "epochSeconds" },
+      "body": { "selector": ".message" }
+    }
+  },
+  "canary": {
+    "minItems": 1,
+    "fillRate": { "sourceId": 1.0, "conversationId": 0.95, "sentAt": 0.9, "body": 0.4 }
+  },
+  "deepLink": "https://web.telegram.org/k/#{conversationId}"
+}

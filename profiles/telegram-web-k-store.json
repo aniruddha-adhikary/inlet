@@ -1,0 +1,118 @@
+{
+  "profile": "telegram-web-k",
+  "profileVersion": 2,
+  "status": "verified",
+  "method": "page-store",
+  "app": {
+    "id": "org.telegram.web",
+    "name": "Telegram",
+    "surface": "web"
+  },
+  "match": {
+    "hosts": [
+      "web.telegram.org"
+    ],
+    "paths": [
+      "/k"
+    ]
+  },
+  "schema": "messages.message",
+  "store": {
+    "root": "window",
+    "path": "apiManagerProxy.mirrors.messages",
+    "depth": 2,
+    "where": {
+      "_": [
+        "message"
+      ]
+    },
+    "fields": {
+      "sourceId": {
+        "join": [
+          "peerId",
+          "id"
+        ],
+        "sep": "_"
+      },
+      "conversationId": {
+        "path": "peerId",
+        "as": "string"
+      },
+      "conversationName": {
+        "path": "peerId",
+        "as": "string",
+        "lookup": {
+          "target": "apiManagerProxy.mirrors.peers",
+          "paths": [
+            "title",
+            "first_name",
+            "username"
+          ]
+        }
+      },
+      "direction": {
+        "path": "pFlags.out",
+        "map": {
+          "true": "outgoing"
+        },
+        "default": "incoming"
+      },
+      "sender": {
+        "anyOf": [
+          {
+            "path": "fromId",
+            "as": "string",
+            "lookup": {
+              "target": "apiManagerProxy.mirrors.peers",
+              "paths": [
+                "title",
+                "first_name",
+                "username"
+              ]
+            }
+          },
+          {
+            "path": "peerId",
+            "as": "string",
+            "lookup": {
+              "target": "apiManagerProxy.mirrors.peers",
+              "paths": [
+                "title",
+                "first_name",
+                "username"
+              ]
+            }
+          }
+        ]
+      },
+      "sentAt": {
+        "path": "date",
+        "parse": "epochSeconds"
+      },
+      "body": {
+        "path": "message"
+      },
+      "senderId": {
+        "paths": [
+          "fromId",
+          "peerId"
+        ],
+        "as": "string"
+      }
+    }
+  },
+  "canary": {
+    "minItems": 1,
+    "fillRate": {
+      "sourceId": 1.0,
+      "conversationId": 1.0,
+      "direction": 1.0,
+      "sentAt": 0.99,
+      "conversationName": 0.8,
+      "sender": 0.7,
+      "body": 0.5
+    }
+  },
+  "deepLink": "https://web.telegram.org/k/#{conversationId}",
+  "notes": "From source reading of morethanwords/tweb (verified against a live session on 2026-09-21): production builds mount window.apiManagerProxy, whose `mirrors.messages[<peerId>_history][<mid>]` and `mirrors.peers[<peerId>]` are main-thread mirrors of the worker's cache. Passive only: reads what the tab already mirrored. Telegram message ids are per-peer, so sourceId joins peerId and id. If the user sets a Telegram passcode nothing changes here (mirrors are in memory)."
+}

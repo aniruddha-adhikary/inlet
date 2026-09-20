@@ -1,0 +1,26 @@
+# Local signing identity
+app/Config/Local.xcconfig
+
+# Build output
+app/build/
+app/build-release/
+dist/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+
+# Research material that must not be redistributed (Apple sample code, crawled docs)
+reference/
+
+# Dev harness
+.bridge/
+.venv/
+__pycache__/
+*.egg-info/
+.ruff_cache/
+uv.lock
+
+# Local tooling and secrets
+.claude/
+.env
+.DS_Store

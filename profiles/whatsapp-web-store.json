@@ -1,0 +1,135 @@
+{
+  "profile": "whatsapp-web",
+  "profileVersion": 2,
+  "status": "verified",
+  "method": "page-store",
+  "app": {
+    "id": "net.whatsapp.web",
+    "name": "WhatsApp",
+    "surface": "web"
+  },
+  "match": {
+    "hosts": [
+      "web.whatsapp.com"
+    ]
+  },
+  "schema": "messages.message",
+  "store": {
+    "require": "WAWebCollections",
+    "collection": "Msg",
+    "versionPath": "Debug.VERSION",
+    "where": {
+      "type": [
+        "chat",
+        "image",
+        "video",
+        "document"
+      ]
+    },
+    "fields": {
+      "sourceId": {
+        "path": "id.id"
+      },
+      "conversationId": {
+        "path": "id.remote",
+        "as": "string"
+      },
+      "conversationName": {
+        "path": "id.remote",
+        "as": "string",
+        "lookup": {
+          "collection": "Chat",
+          "paths": [
+            "formattedTitle",
+            "name"
+          ]
+        }
+      },
+      "direction": {
+        "path": "id.fromMe",
+        "map": {
+          "true": "outgoing",
+          "false": "incoming"
+        }
+      },
+      "sender": {
+        "anyOf": [
+          {
+            "paths": [
+              "author",
+              "from"
+            ],
+            "as": "string",
+            "lookup": {
+              "collection": "Contact",
+              "paths": [
+                "name",
+                "pushname",
+                "verifiedName",
+                "formattedName"
+              ]
+            }
+          },
+          {
+            "path": "notifyName"
+          },
+          {
+            "switch": "id.remote.server",
+            "cases": {
+              "g.us": {
+                "const": null
+              },
+              "default": {
+                "path": "id.remote",
+                "as": "string",
+                "lookup": {
+                  "collection": "Chat",
+                  "paths": [
+                    "formattedTitle",
+                    "name"
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "sentAt": {
+        "path": "t",
+        "parse": "epochSeconds"
+      },
+      "body": {
+        "switch": "type",
+        "cases": {
+          "chat": {
+            "path": "body"
+          },
+          "default": {
+            "path": "caption"
+          }
+        }
+      },
+      "senderId": {
+        "paths": [
+          "author",
+          "from"
+        ],
+        "as": "string"
+      }
+    }
+  },
+  "canary": {
+    "minItems": 1,
+    "fillRate": {
+      "sourceId": 1.0,
+      "conversationId": 1.0,
+      "direction": 1.0,
+      "sentAt": 0.99,
+      "conversationName": 0.9,
+      "sender": 0.9,
+      "body": 0.7
+    }
+  },
+  "deepLink": "https://web.whatsapp.com/",
+  "notes": "Reads WhatsApp Web's in-memory WAWebCollections store (paths checked live 2026-09-20). Passive: only messages the page has already loaded; never calls loadEarlierMsgs or anything that talks to the phone. sourceId is the bare id.id so it matches whatsapp-web@1's DOM data-id and both profiles address the same entities. For media, body is the caption: Msg.body holds a base64 thumbnail there."
+}

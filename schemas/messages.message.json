@@ -1,0 +1,43 @@
+{
+  "schema": "messages.message",
+  "description": "Normalized shape for one chat message. Mirrors Apple's .messages.message App Schema so the Swift donor can map it 1:1.",
+  "fields": {
+    "sourceId": {
+      "type": "string",
+      "required": true,
+      "identity": true
+    },
+    "conversationId": {
+      "type": "string",
+      "required": false
+    },
+    "conversationName": {
+      "type": "string",
+      "required": false
+    },
+    "sender": {
+      "type": "string",
+      "required": false
+    },
+    "senderId": {
+      "type": "string",
+      "required": false
+    },
+    "direction": {
+      "type": "enum",
+      "values": [
+        "incoming",
+        "outgoing"
+      ],
+      "required": false
+    },
+    "body": {
+      "type": "string",
+      "required": false
+    },
+    "sentAt": {
+      "type": "datetime",
+      "required": false
+    }
+  }
+}

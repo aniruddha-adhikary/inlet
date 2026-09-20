@@ -1,0 +1,65 @@
+{
+  "profile": "whatsapp-web",
+  "profileVersion": 1,
+  "status": "verified",
+  "app": {
+    "id": "net.whatsapp.web",
+    "name": "WhatsApp",
+    "surface": "web"
+  },
+  "match": {
+    "hosts": [
+      "web.whatsapp.com"
+    ]
+  },
+  "schema": "messages.message",
+  "extract": {
+    "context": {
+      "conversationName": {
+        "selector": "#main header span[dir='auto']"
+      }
+    },
+    "item": "#main div[data-id]",
+    "fields": {
+      "sourceId": {
+        "get": "attr:data-id"
+      },
+      "direction": {
+        "selector": "[data-testid='msg-meta'] [aria-label]",
+        "get": "exists",
+        "map": {
+          "true": "outgoing",
+          "false": "incoming"
+        }
+      },
+      "sender": {
+        "selector": "[data-pre-plain-text]",
+        "get": "attr:data-pre-plain-text",
+        "regex": "^\\[[^\\]]*\\]\\s*(.*?):\\s*$",
+        "group": 1
+      },
+      "sentAt": {
+        "selector": "[data-pre-plain-text]",
+        "get": "attr:data-pre-plain-text",
+        "regex": "^\\[(?<h>\\d{1,2}):(?<min>\\d{2})\\s*(?<ampm>[AaPp]\\.?\\s?[Mm]\\.?)?,\\s*(?<d1>\\d{1,2})[/.-](?<d2>\\d{1,2})[/.-](?<y>\\d{2,4})\\]",
+        "parse": "datetime",
+        "dateOrder": "auto"
+      },
+      "body": {
+        "selector": "[data-pre-plain-text] span.selectable-text"
+      }
+    }
+  },
+  "canary": {
+    "minItems": 1,
+    "fillRate": {
+      "sourceId": 1.0,
+      "conversationName": 0.95,
+      "sender": 0.5,
+      "sentAt": 0.5,
+      "body": 0.4
+    }
+  },
+  "deepLink": "https://web.whatsapp.com/",
+  "notes": "Checked against live WhatsApp Web on 2026-09-20. data-id is now a bare hex message id (no chat jid, no true_/false_ prefix), so the DOM offers no conversationId; direction is inferred from the delivery-status label that only outgoing bubbles carry."
+}

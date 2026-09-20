@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  readers:
+    name: In-page readers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test readers/tests/pagestore.test.mjs
+
+  harness:
+    name: Dev harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run python -m unittest discover -s tests
+        working-directory: dev/harness/host
+      - run: uvx ruff check . && uvx ruff format --check .
+        working-directory: dev/harness/host
+
+  profiles:
+    name: Profiles validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run python -m bridge.cli profiles
+        working-directory: dev/harness/host
+
+# The Mac app needs macOS 27 + Xcode 27 and a signing team, which hosted runners don't
+# provide yet; build and test it locally (see CONTRIBUTING.md).
