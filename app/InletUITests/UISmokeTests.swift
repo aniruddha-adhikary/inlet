@@ -14,7 +14,7 @@ final class UISmokeTests: XCTestCase {
     }
 
     /// The welcome and the tour appear on their own for a new user; tests ask for them explicitly.
-    private static let introSeen = ["--offline", "-welcome.seen", "YES", "-tour.seen", "YES"]
+    private static let introSeen = ["--offline", "--screenshots", "-welcome.seen", "YES", "-tour.seen", "YES"]
 
     /// The "?" menu in the window's toolbar.
     private func help(_ window: XCUIElement, _ item: String) {

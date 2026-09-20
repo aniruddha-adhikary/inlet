@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/icon.png" width="128" height="128" alt="Inlet icon">
+</p>
+
 # Inlet
 
 **Let Siri AI and Spotlight find what's inside apps that haven't opened their content to the
@@ -8,6 +12,15 @@ Messaging apps come first because that is where the gap is widest. The design is
 chats: every app is a catalog entry plus a profile, and each declares what kind of content it brings.
 
 > *"Who got a new cooker?"* → *"Mira mentioned in Inlet that she bought a smart cooker."*
+
+<p align="center">
+  <img src="docs/images/main.png" width="49%" alt="The Inlet window: your apps in a sidebar, one pane per app">
+  <img src="docs/images/welcome.png" width="49%" alt="The welcome screen: stays on this Mac, read only, encrypted and yours to erase">
+</p>
+<p align="center">
+  <img src="docs/images/privacy.png" width="49%" alt="The Privacy pane">
+  <img src="docs/images/context.png" width="49%" alt="A result opened in context (fictional demo data)">
+</p>
 
 - macOS 27 (Siri AI) only. WhatsApp Web and Telegram Web today.
 - **Read-only by construction.** No code path can send, edit, delete or mark anything.

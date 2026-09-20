@@ -54,6 +54,10 @@ final class AppModel {
 
     func status(of session: SourceSession) -> Status {
         _ = settingsRevision
+        #if DEBUG
+        // Offline UI tests take the README screenshots: show the everyday state rather than "Paused".
+        if CommandLine.arguments.contains("--screenshots") { return .upToDate }
+        #endif
         if AppSettings.isPaused(session.descriptor.id) || SourceSession.isOffline { return .paused }
         switch session.state {
         case .connected: return .upToDate
