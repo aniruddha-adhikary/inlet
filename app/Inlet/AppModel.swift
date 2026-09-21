@@ -78,7 +78,16 @@ final class AppModel {
         sessions = AppSettings.accounts.compactMap { account in
             AppCatalog.shared.app(account.key).flatMap { $0.isAvailable ? SourceSession(account, $0) : nil }
         }
-        selection = sessions.first?.descriptor.id
+        #if DEBUG
+        // README and announcement screenshots on a Mac with no accounts: show the two shipped apps.
+        // In memory only (nothing is saved), and `--offline` keeps them from loading anything.
+        if sessions.isEmpty, SourceSession.isOffline, CommandLine.arguments.contains("--screenshots") {
+            sessions = ["net.whatsapp.web", "org.telegram.web"].compactMap { id in
+                AppCatalog.shared.app(id).map { SourceSession(Account(key: id, name: $0.name, storeID: nil), $0) }
+            }
+        }
+        #endif
+        selection = sessions.first?.key
         loop = Task {
             let store = store
             await Task.detached { await Donor.migrateIndexIfNeeded(store: store) }.value
