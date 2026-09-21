@@ -168,7 +168,7 @@ final class AppModel {
         let appID = session.key
         sessions.removeAll { $0.key == appID }
         AppSettings.forget(appID)
-        if selection == appID { selection = sessions.first?.descriptor.id }
+        if selection == appID { selection = sessions.first?.key }
         try? await Task.detached {
             try store.deleteEverything(appID: appID)
             try await Donor.rebuildIndex(from: store)
