@@ -34,7 +34,8 @@ the hard-won rules about what Siri will actually use.
 | `profiles/`, `schemas/` | how each app is read, and the normalized record shapes |
 | `readers/` | JavaScript injected into web sessions, with tests |
 | `dev/harness/` | optional Python harness for developing profiles |
-| `scripts/` | `install-app.sh`, `package.sh`, `release.sh`, `make-icon.swift` |
+| `app/Inlet/AppIcon.icon/` | the app icon: an Icon Composer document (`icon.json` + SVG layers) |
+| `scripts/` | `install-app.sh`, `package.sh`, `release.sh` |
 
 Accounts: everything stored is scoped by an account key (`<appID>` or `<appID>#<suffix>`), held in
 the `app_id` column. `Account.appID(ofKey:)` strips the suffix.
@@ -86,6 +87,15 @@ The sandbox container is unreadable from outside, so ask the app about itself:
   toolbar menu. Windows can be opened with no live SwiftUI view via `AppModel.show(window:)`.
 - `app/Inlet.xcodeproj` is hand-written with a synchronized root group: new Swift files under
   `app/Inlet/` are picked up automatically.
+- The app icon is `app/Inlet/AppIcon.icon`, an Icon Composer document, not an `.appiconset`. The
+  SVG layers carry the mark in white on a transparent canvas and nothing else: the system draws the
+  rounded square, the gradient fill from `icon.json`, the glass, the shadow and every appearance
+  (dark, tinted, clear). Baking a squircle, a background or a shadow into a layer breaks all of
+  them. Render a change before trusting it, at a large size (small ones alias into false seams):
+  `"/Applications/Xcode.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool" \
+  app/Inlet/AppIcon.icon --export-image --output-file /tmp/icon.png --platform macOS --rendition
+  Default --width 1024 --height 1024 --scale 1` (also `Dark`, `TintedLight`, `TintedDark`,
+  `ClearLight`, `ClearDark`).
 
 ## Releasing
 

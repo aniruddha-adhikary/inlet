@@ -1,0 +1,8 @@
+<!-- Inlet mark, lower layer: an open-topped tray receiving the arrow.
+     Content from your apps arriving on this Mac. Deliberately says nothing
+     about what kind of content: Inlet is not only for chats. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="48 48 928 928">
+  <path d="M 292 524 L 292 652 Q 292 732 372 732 L 652 732 Q 732 732 732 652 L 732 524"
+        fill="none" stroke="#ffffff" stroke-width="68"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

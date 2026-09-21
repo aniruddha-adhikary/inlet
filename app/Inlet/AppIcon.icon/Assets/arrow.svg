@@ -1,0 +1,10 @@
+<!-- Inlet mark, upper layer: an arrow pointing down into the tray.
+     Drawn on the same 1024 grid as tray.svg; the viewBox inset of 48 scales
+     the mark to ~110% so it sits confidently inside the system's glass square
+     without crowding the safe area. Left white: every appearance (dark,
+     tinted, clear) is derived by the system from these shapes. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="48 48 928 928">
+  <path d="M 512 252 L 512 572 M 392 452 L 512 572 L 632 452"
+        fill="none" stroke="#ffffff" stroke-width="68"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,27 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "extended-srgb:0.20392,0.78039,0.34902,1.00000",
+      "extended-srgb:0.05882,0.63922,0.63922,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "arrow.svg",
+          "name" : "Arrow"
+        },
+        {
+          "image-name" : "tray.svg",
+          "name" : "Tray"
+        }
+      ]
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "macOS"
+    ]
+  }
+}
